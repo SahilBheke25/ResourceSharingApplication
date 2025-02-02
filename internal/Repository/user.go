@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	createNewUser = `INSERT INTO users (user_name, password, first_name, last_name, email, phone, address, pincode, uid) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
-	userByid      = `SELECT * from users where user_name = $1`
+	createNewUser  = `INSERT INTO users (user_name, password, first_name, last_name, email, phone, address, pincode, uid) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+	userByusername = `SELECT password from users where user_name = $1`
 )
 
 func CreateUser(user_name, password, first_name, last_name, email, phone, address string, pincode int, uid int) error {
@@ -20,14 +20,19 @@ func CreateUser(user_name, password, first_name, last_name, email, phone, addres
 	return nil
 }
 
-func GetUserByUsername(userName string) error {
-	res, err := DB.Exec(userByid, userName)
+func AuthenticateUser(userName, password string) (bool, error) {
+
+	var dbPassword string
+
+	err := DB.QueryRow(userByusername, userName).Scan(&dbPassword)
 
 	if err != nil {
-		return fmt.Errorf("Error while feting User by id: %v", err)
+		return false, fmt.Errorf("User Not Found: %v", err)
 	}
 
-	fmt.Printf("%v \n", res)
+	if dbPassword != password {
+		return false, fmt.Errorf("Bad Credentials")
+	}
 
-	return nil
+	return true, nil
 }

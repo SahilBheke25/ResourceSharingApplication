@@ -3,31 +3,39 @@ package login
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/handle"
+	Repository "github.com/SahilBheke25/ResourceSharingApplication/internal/repository"
 )
 
-type userCredentials struct {
-	Username     string `json: "Username`
-	Userpassword string `json: "Userpassword`
+type user struct {
+	Username string `json: "username"`
+	Password string `json: "password"`
 }
+
+// For authorization use
+var users = make(map[string]user)
 
 func Verify(w http.ResponseWriter, r *http.Request) {
 
-	body, err := io.ReadAll(r.Body)
-	fmt.Printf("%s", body)
 	defer r.Body.Close()
+
+	var user user
+
+	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		http.Error(w, err.Error(), 500)
+		err = fmt.Errorf("Error while decoding request body: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	var user userCredentials
-	json.Unmarshal(body, &user)
-	fmt.Printf("Username: %s, Password: %s \n", user.Username, user.Userpassword)
+	verified, err := Repository.AuthenticateUser(user.Username, user.Password)
+	if err != nil || !verified {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
 
-	handle.HandleResponse(w, user, r)
+	handle.HandleResponse(w, "User Verifed Successfully", r)
 
 }

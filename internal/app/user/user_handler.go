@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/Repository"
 )
 
 type user struct {
@@ -31,7 +29,7 @@ func GetUserByIdHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = Repository.GetUserByUsername(user.username)
+	// err = Repository.GetUserByUsername(user.username)
 
 	if err != nil {
 		err = fmt.Errorf("Error while Fetching user by username: %v", err)

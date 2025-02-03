@@ -31,7 +31,7 @@ func AuthenticateUser(userName, password string) (bool, error) {
 	}
 
 	if dbPassword != password {
-		return false, fmt.Errorf("Bad Credentials")
+		return false, fmt.Errorf("Wrong Password!!")
 	}
 
 	return true, nil

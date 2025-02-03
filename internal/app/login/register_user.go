@@ -6,31 +6,20 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/Repository"
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/handle"
+	Models "github.com/SahilBheke25/ResourceSharingApplication/internal/models"
+	Repository "github.com/SahilBheke25/ResourceSharingApplication/internal/repository"
 )
 
 // const (
 // 	EncryptionKey = "thisis32bitlongpassphrase!"
 // )
 
-type User struct {
-	Username   string `json:"username"`
-	Password   string `json:"password"`
-	First_name string `json:"firstname"`
-	Last_name  string `json:"lastname"`
-	Email      string `json:"email"`
-	Phone      string `json:"phone"`
-	Address    string `json:"address"`
-	Pincode    int    `json:"pincode"`
-	Uid        int    `json:"uid"`
-}
-
 func Register(w http.ResponseWriter, r *http.Request) {
 	// Ensure body gets closed
 	defer r.Body.Close()
 
-	var user User
+	var user Models.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 
 	if err != nil {
@@ -44,14 +33,6 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ecrypting password
-	// user.Password, err = hasPassword(user.Password)
-	// if err != nil {
-	// 	err = fmt.Errorf("Internal Server Error while decrypting password: %v", err)
-	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
-	// 	return
-	// }
-
 	// create user & checks if user already exist.
 	err = Repository.CreateUser(user.Username, user.Password, user.First_name, user.Last_name, user.Email, user.Phone, user.Address, user.Pincode, user.Uid)
 	if err != nil {
@@ -62,7 +43,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	handle.HandleResponse(w, "User Registered Successfully ", r)
 }
 
-func validateUser(user User) (bool, error) {
+func validateUser(user Models.User) (bool, error) {
 	if len(user.Username) < 2 {
 
 		return false, fmt.Errorf("Username too short")
@@ -91,8 +72,3 @@ func validateUser(user User) (bool, error) {
 
 	return true, nil
 }
-
-// func hashPassword(password string) (string, error) {
-// 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 2)
-// 	return string(bytes), err
-// }

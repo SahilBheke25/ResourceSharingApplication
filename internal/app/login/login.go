@@ -5,20 +5,23 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/Repository"
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/handle"
+	Repository "github.com/SahilBheke25/ResourceSharingApplication/internal/repository"
 )
 
-type userCredentials struct {
+type user struct {
 	Username string `json: "username"`
 	Password string `json: "password"`
 }
+
+// For authorization use
+var users = make(map[string]user)
 
 func Verify(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
-	var user userCredentials
+	var user user
 
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
@@ -29,7 +32,7 @@ func Verify(w http.ResponseWriter, r *http.Request) {
 
 	verified, err := Repository.AuthenticateUser(user.Username, user.Password)
 	if err != nil || !verified {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 		return
 	}
 

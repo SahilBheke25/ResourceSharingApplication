@@ -5,8 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	Equipment "github.com/SahilBheke25/ResourceSharingApplication/internal/app/equipment"
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/login"
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/equipment"
 
 	repository "github.com/SahilBheke25/ResourceSharingApplication/internal/repository"
 
@@ -16,15 +15,21 @@ import (
 func main() {
 
 	// Creating DB connection
-	repository.InitializeDatabase()
-	defer repository.DB.Close()
+	db := repository.InitializeDatabase()
+	defer db.Close()
+
+	equipmentRepo := repository.NewEquipmentStore(db)
+	equipmentService := equipment.NewService(equipmentRepo)
+	equipmentHandler := equipment.NewHandler(equipmentService)
 
 	mux := http.DefaultServeMux
-	mux.HandleFunc("POST /login", login.Verify)
-	mux.HandleFunc("POST /register", login.Register)
-	mux.HandleFunc("POST /equipment", Equipment.PostLendEquipmentHandler)
-	mux.HandleFunc("GET /equipments", Equipment.ListEquipmentHandler)
-	mux.HandleFunc("GET /equipments/{id}", Equipment.GetEquipmentHandler)
+	// mux.HandleFunc("POST /login", user.Verify)
+	// mux.HandleFunc("POST /register", user.Register)
+	mux.HandleFunc("POST /equipments", equipmentHandler.CreateEquipmentHandler)
+	mux.HandleFunc("GET /equipments", equipmentHandler.ListEquipmentHandler)
+	// mux.HandleFunc("GET /equipments/{user_id}", equipment.GetEquipmentsByUserIdHandler)
+	// mux.HandleFunc("DELETE /equipments/{equipment_id}", equipment.DeleteEquipmentHandler)
+	// mux.HandleFunc("PUT /equipments/{equipment_id}", equipment.UpdateEquipmentHandler)
 
 	fmt.Println("listning to port 3000")
 	log.Fatal(http.ListenAndServe(":3000", mux))

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/handle"
 	Models "github.com/SahilBheke25/ResourceSharingApplication/internal/models"
@@ -33,7 +35,7 @@ func PostLendEquipmentHandler(w http.ResponseWriter, r *http.Request) {
 	handle.HandleResponse(w, equipment, r)
 }
 
-func GetAllEquipmentHandler(w http.ResponseWriter, r *http.Request) {
+func ListEquipmentHandler(w http.ResponseWriter, r *http.Request) {
 
 	equipments, err := Repository.GetAllEquipment()
 
@@ -42,4 +44,31 @@ func GetAllEquipmentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	handle.HandleResponse(w, equipments, r)
+}
+
+func GetEquipmentHandler(w http.ResponseWriter, r *http.Request) {
+
+	path := r.URL.Path
+
+	var userID string
+
+	// Extraction path param using trip fuction
+	if strings.HasPrefix(path, "/equipments/") {
+		userID = strings.TrimPrefix(path, "/equipments/") // Extract the part after "/equipments/"
+
+		// Do something with the username, e.g., fetch equipment for this user
+		fmt.Fprintf(w, "Equipment for user: %s", userID)
+	} else {
+		http.NotFound(w, r) // Return 404 if the path doesn't match
+	}
+
+	id, err := strconv.Atoi(userID)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	fmt.Println("Id; ", id)
+	// equipments, err := Repository.GetEquipment(id)
+
+	handle.HandleResponse(w, "equipments", r)
 }

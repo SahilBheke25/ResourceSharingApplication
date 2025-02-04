@@ -47,6 +47,10 @@ func GetAllEquipment() ([]Models.Equipment, error) {
 	return equipmentArr, nil
 }
 
+func GetEquipment(username string) {
+
+}
+
 // func AuthenticateUser(userName, password string) (bool, error) {
 
 // 	var dbPassword string

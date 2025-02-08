@@ -1,11 +1,85 @@
 package user
 
-// import (
-// 	"encoding/json"
-// 	"fmt"
-// 	"io"
-// 	"net/http"
-// )
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/utils"
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
+)
+
+type userHandler struct {
+	userService Service
+}
+
+type Handler interface {
+	VerifyUserHandler(w http.ResponseWriter, r *http.Request)
+	RegisterUserHandler(w http.ResponseWriter, r *http.Request)
+}
+
+func NewHandler(service Service) Handler {
+	return &userHandler{userService: service}
+}
+
+func (u *userHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Request) {
+
+	defer r.Body.Close()
+
+	var user models.User
+
+	// Reading json request
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil {
+		err = fmt.Errorf("error while decoding request body: %v", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Authenticating User
+	verified, err := u.userService.AuthenticateUser(context.Background(), user.Username, user.Password)
+	if err != nil || !verified {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	utils.HandleResponse(w, "User Verifed Successfully", r)
+
+}
+
+func (u *userHandler) RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
+
+	// Ensure body gets closed
+	defer r.Body.Close()
+
+	var user models.User
+	err := json.NewDecoder(r.Body).Decode(&user)
+
+	if err != nil {
+		http.Error(w, "Error unmarshalling request body", http.StatusInternalServerError)
+		return
+	}
+
+	// Validating user data
+	_, err = u.userService.ValidateUser(context.Background(), user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotAcceptable)
+		return
+	}
+
+	// create user & checks if user already exist.
+	err = u.userService.CreateUser(context.Background(), user)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	utils.HandleResponse(w, "User Registered Successfully ", r)
+}
+
+// ------------------------------------------------------------------
 
 // type user struct {
 // 	username string `json: username`
@@ -37,17 +111,5 @@ package user
 // 		return
 // 	}
 
-// 	HandleResponse(w, "Success", r)
-// }
-
-// func HandleResponse(w http.ResponseWriter, message any, r *http.Request) {
-
-// 	res, err := json.Marshal(message)
-// 	if err != nil {
-// 		http.Error(w, "Error while marshalling", http.StatusInternalServerError)
-// 	}
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.WriteHeader(http.StatusOK)
-// 	w.Write(res)
-
+// 	utils.HandleResponse(w, "Success", r)
 // }

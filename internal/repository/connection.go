@@ -1,4 +1,4 @@
-package Repository
+package repository
 
 import (
 	"database/sql"
@@ -13,10 +13,8 @@ const (
 	dbname   = "resourcesharing"
 )
 
-var DB *sql.DB
-
-func InitializeDatabase() {
-
+func InitializeDatabase() *sql.DB {
+	var DB *sql.DB
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
 		host, 5432, user, password, dbname)
@@ -33,5 +31,5 @@ func InitializeDatabase() {
 		panic(err)
 	}
 
-	fmt.Println("Successfully connected!")
+	return DB
 }

@@ -1,38 +1,52 @@
-package Repository
+package repository
 
-import (
-	"fmt"
-)
+// import (
+// 	"fmt"
 
-const (
-	createNewUser  = `INSERT INTO users (user_name, password, first_name, last_name, email, phone, address, pincode, uid) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
-	userByusername = `SELECT password from users where user_name = $1`
-)
+// 	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
+// )
 
-func CreateUser(user_name, password, first_name, last_name, email, phone, address string, pincode int, uid int) error {
+// const (
+// 	createNewUser = `INSERT INTO users (user_name, password, first_name,
+// 					  	last_name, email, phone, address, pincode, uid)
+// 						VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
-	_, err := DB.Exec(createNewUser, user_name, password, first_name, last_name, email, phone, address, pincode, uid)
+// 	userByusername = `SELECT password from users where user_name = $1`
+// )
 
-	if err != nil {
-		return fmt.Errorf("Error while creating new user entry: %v", err)
-	}
+// func CreateUser(user models.User) error {
 
-	return nil
-}
+// 	_, err := DB.Exec(createNewUser,
+// 		user.Username,
+// 		user.Password,
+// 		user.First_name,
+// 		user.Last_name,
+// 		user.Email,
+// 		user.Phone,
+// 		user.Address,
+// 		user.Pincode,
+// 		user.Uid)
 
-func AuthenticateUser(userName, password string) (bool, error) {
+// 	if err != nil {
+// 		return fmt.Errorf("error while creating new user entry: %v", err)
+// 	}
 
-	var dbPassword string
+// 	return nil
+// }
 
-	err := DB.QueryRow(userByusername, userName).Scan(&dbPassword)
+// func AuthenticateUser(userName, password string) (bool, error) {
 
-	if err != nil {
-		return false, fmt.Errorf("User Not Found: %v", err)
-	}
+// 	var dbPassword string
 
-	if dbPassword != password {
-		return false, fmt.Errorf("Wrong Password!!")
-	}
+// 	err := DB.QueryRow(userByusername, userName).Scan(&dbPassword)
 
-	return true, nil
-}
+// 	if err != nil {
+// 		return false, fmt.Errorf("user Not Found: %v", err)
+// 	}
+
+// 	if dbPassword != password {
+// 		return false, fmt.Errorf("wrong Password")
+// 	}
+
+// 	return true, nil
+// }

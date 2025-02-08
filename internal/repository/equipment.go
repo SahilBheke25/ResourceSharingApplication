@@ -1,69 +1,182 @@
-package Repository
+package repository
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 
-	Models "github.com/SahilBheke25/ResourceSharingApplication/internal/models"
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
 )
 
 const (
-	createNewEquipment = `INSERT INTO equipments (equipment_name, description, rent_per_hour, quantity, equipment_img, available_from, available_till, username) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
-	getEquipments      = `SELECT equipment_name, description, rent_per_hour, quantity, equipment_img, available_from, available_till, username from equipments`
-	quipmentByusername = `SELECT password from users where user_name = $1`
+	createEquipment = `INSERT INTO equipments (
+						  	equipment_name, description, rent_per_hour, quantity, 
+							equipment_img, available_from, available_till, user_id) 
+							VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+							RETURNING id, equipment_name, description, rent_per_hour, quantity, 
+							equipment_img, available_from, available_till, status, uploaded_at`
+
+	getEquipments = `SELECT equipment_name, description, rent_per_hour, quantity, 
+						  	equipment_img, available_from, available_till, status, 
+							uploaded_at from equipments`
+
+	equipmentsByUserId = `SELECT id, equipment_name, description, rent_per_hour, 
+							quantity, equipment_img, available_from, available_till, 
+							status, uploaded_at from equipments 
+							WHERE user_id = $1`
+
+	deleteEquipment = `DELETE FROM equipments WHERE id = $1`
+
+	updateEquipment = `UPDATE equipments SET equipment_name = $1,
+    					description = $2,
+    					rent_per_hour = $3,
+    					quantity = $4,
+   						status = $5,
+    					equipment_img = $6,
+    					available_from = $7,
+                        available_till = $8
+						WHERE id = $9;`
 )
 
-func CreateEquipment(equipment_name, description, equipment_img, available_from, available_till, username string, rent_per_hour, quantity int) error {
-
-	_, err := DB.Exec(createNewEquipment, equipment_name, description, rent_per_hour, quantity, equipment_img, available_from, available_till, username)
-
-	if err != nil {
-		return fmt.Errorf("Error while creating new Equipment entry: %v", err)
-	}
-
-	return nil
+type equipment struct {
+	db *sql.DB
 }
 
-func GetAllEquipment() ([]Models.Equipment, error) {
+type EquipmentStorer interface {
+	CreateEquipment(ctx context.Context, eqp models.Equipment) (models.Equipment, error)
+	GetAllEquipment(ctx context.Context) ([]models.Equipment, error)
+}
 
-	var equipment Models.Equipment
-	var equipmentArr []Models.Equipment
+func NewEquipmentStore(db *sql.DB) EquipmentStorer {
+	return equipment{db: db}
+}
 
-	list, err := DB.Query(getEquipments)
+func (e equipment) CreateEquipment(ctx context.Context, eqp models.Equipment) (models.Equipment, error) {
+
+	res := e.db.QueryRowContext(ctx, createEquipment,
+		eqp.Name,
+		eqp.Description,
+		eqp.RentPerHour,
+		eqp.Quantity,
+		eqp.EquipmentImg,
+		eqp.AvailableFrom,
+		eqp.AvailableTill,
+		eqp.UserId,
+	)
+	err := res.Err()
 	if err != nil {
-		err = fmt.Errorf("Error while executing query: %v", err)
+		fmt.Printf("error occured while making db reqeust for create quipment")
+		return models.Equipment{}, err
+	}
+
+	var resp models.Equipment
+
+	res.Scan(
+		&resp.ID,
+		&resp.Name,
+		&resp.Description,
+		&resp.RentPerHour,
+		&resp.Quantity,
+		&resp.EquipmentImg,
+		&resp.AvailableFrom,
+		&resp.AvailableTill,
+		&resp.Status,
+		&resp.UploadedAt)
+
+	return resp, nil
+}
+
+func (e equipment) GetAllEquipment(ctx context.Context) ([]models.Equipment, error) {
+
+	var equipment models.Equipment
+	var equipmentArr []models.Equipment
+
+	list, err := e.db.Query(getEquipments)
+
+	if err != nil {
+		err = fmt.Errorf("error while executing query: %v", err)
 		return equipmentArr, err
 	}
 
 	for list.Next() {
-		err := list.Scan(&equipment.EquipmentName, &equipment.Description, &equipment.RentPerHour, &equipment.Quantity, &equipment.EquipmentImg, &equipment.AvailableFrom, &equipment.AvailableTill, &equipment.Username)
+
+		err := list.Scan(&equipment.Name,
+			&equipment.Description,
+			&equipment.RentPerHour,
+			&equipment.Quantity,
+			&equipment.EquipmentImg,
+			&equipment.AvailableFrom,
+			&equipment.AvailableTill,
+			&equipment.Status,
+			&equipment.UploadedAt)
+
 		if err != nil {
-			err = fmt.Errorf("Error while accessing DB: %v", err)
+			err = fmt.Errorf("error while accessing DB: %v", err)
 			return equipmentArr, err
 		}
-		fmt.Println(equipment)
-		equipmentArr = append(equipmentArr, equipment)
 
+		equipmentArr = append(equipmentArr, equipment)
 	}
+
 	return equipmentArr, nil
 }
 
-func GetEquipment(username string) {
+// func GetEquipmentsByUserId(userId int) ([]models.Equipment, error) {
 
-}
+// 	var equipment models.Equipment
+// 	var equipmentArr []models.Equipment
 
-// func AuthenticateUser(userName, password string) (bool, error) {
-
-// 	var dbPassword string
-
-// 	err := DB.QueryRow(userByusername, userName).Scan(&dbPassword)
+// 	list, err := DB.Query(equipmentsByUserId, userId)
 
 // 	if err != nil {
-// 		return false, fmt.Errorf("User Not Found: %v", err)
+// 		err = fmt.Errorf("error while executing query: %v", err)
+// 		return equipmentArr, err
 // 	}
 
-// 	if dbPassword != password {
-// 		return false, fmt.Errorf("Wrong Password!!")
+// 	for list.Next() {
+
+// 		err := list.Scan(&equipment.ID,
+// 			&equipment.Name,
+// 			&equipment.Description,
+// 			&equipment.RentPerHour,
+// 			&equipment.Quantity,
+// 			&equipment.EquipmentImg,
+// 			&equipment.AvailableFrom,
+// 			&equipment.AvailableTill,
+// 			&equipment.Status,
+// 			&equipment.UploadedAt)
+
+// 		if err != nil {
+// 			err = fmt.Errorf("error while accessing DB: %v", err)
+// 			return equipmentArr, err
+// 		}
+
+// 		equipmentArr = append(equipmentArr, equipment)
 // 	}
 
-// 	return true, nil
+// 	return equipmentArr, nil
+// }
+
+// func DeleteEquipmentById(equipmentId int) error {
+
+// 	_, err := DB.Exec(deleteEquipment, equipmentId)
+
+// 	if err != nil {
+// 		return fmt.Errorf("error while Deleting equipment: %v", err)
+// 	}
+
+// 	return nil
+// }
+
+// func UpdateEquipment(equipmentId int, equipment models.Equipment) error {
+
+// 	_, err := DB.Exec(updateEquipment,
+// 		equipment.Name,
+// 		equipmentId)
+
+// 	if err != nil {
+// 		return fmt.Errorf("error while Deleting equipment: %v", err)
+// 	}
+
+// 	return nil
 // }

@@ -35,7 +35,9 @@ const (
     					equipment_img = $6,
     					available_from = $7,
                         available_till = $8
-						WHERE id = $9;`
+						WHERE id = $9
+						RETURNING id, equipment_name, description, rent_per_hour, quantity, 
+						equipment_img, available_from, available_till, status, uploaded_at`
 )
 
 type equipment struct {
@@ -45,6 +47,7 @@ type equipment struct {
 type EquipmentStorer interface {
 	CreateEquipment(ctx context.Context, eqp models.Equipment) (models.Equipment, error)
 	GetAllEquipment(ctx context.Context) ([]models.Equipment, error)
+	UpdateEquipment(tx context.Context, equipmentId int, equipment models.Equipment) (models.Equipment, error)
 }
 
 func NewEquipmentStore(db *sql.DB) EquipmentStorer {
@@ -121,62 +124,38 @@ func (e equipment) GetAllEquipment(ctx context.Context) ([]models.Equipment, err
 	return equipmentArr, nil
 }
 
-// func GetEquipmentsByUserId(userId int) ([]models.Equipment, error) {
+func (e equipment) UpdateEquipment(ctx context.Context, equipmentId int, equipment models.Equipment) (models.Equipment, error) {
 
-// 	var equipment models.Equipment
-// 	var equipmentArr []models.Equipment
+	res := e.db.QueryRowContext(ctx, updateEquipment,
+		equipment.Name,
+		equipment.Description,
+		equipment.RentPerHour,
+		equipment.Quantity,
+		equipment.Status,
+		equipment.EquipmentImg,
+		equipment.AvailableFrom,
+		equipment.AvailableTill,
+		equipmentId)
 
-// 	list, err := DB.Query(equipmentsByUserId, userId)
+	err := res.Err()
 
-// 	if err != nil {
-// 		err = fmt.Errorf("error while executing query: %v", err)
-// 		return equipmentArr, err
-// 	}
+	if err != nil {
+		return models.Equipment{}, fmt.Errorf("error while Deleting equipment: %v", err)
+	}
 
-// 	for list.Next() {
+	var resp models.Equipment
 
-// 		err := list.Scan(&equipment.ID,
-// 			&equipment.Name,
-// 			&equipment.Description,
-// 			&equipment.RentPerHour,
-// 			&equipment.Quantity,
-// 			&equipment.EquipmentImg,
-// 			&equipment.AvailableFrom,
-// 			&equipment.AvailableTill,
-// 			&equipment.Status,
-// 			&equipment.UploadedAt)
+	res.Scan(
+		&resp.ID,
+		&resp.Name,
+		&resp.Description,
+		&resp.RentPerHour,
+		&resp.Quantity,
+		&resp.EquipmentImg,
+		&resp.AvailableFrom,
+		&resp.AvailableTill,
+		&resp.Status,
+		&resp.UploadedAt)
 
-// 		if err != nil {
-// 			err = fmt.Errorf("error while accessing DB: %v", err)
-// 			return equipmentArr, err
-// 		}
-
-// 		equipmentArr = append(equipmentArr, equipment)
-// 	}
-
-// 	return equipmentArr, nil
-// }
-
-// func DeleteEquipmentById(equipmentId int) error {
-
-// 	_, err := DB.Exec(deleteEquipment, equipmentId)
-
-// 	if err != nil {
-// 		return fmt.Errorf("error while Deleting equipment: %v", err)
-// 	}
-
-// 	return nil
-// }
-
-// func UpdateEquipment(equipmentId int, equipment models.Equipment) error {
-
-// 	_, err := DB.Exec(updateEquipment,
-// 		equipment.Name,
-// 		equipmentId)
-
-// 	if err != nil {
-// 		return fmt.Errorf("error while Deleting equipment: %v", err)
-// 	}
-
-// 	return nil
-// }
+	return resp, nil
+}

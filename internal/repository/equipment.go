@@ -45,6 +45,7 @@ type equipment struct {
 type EquipmentStorer interface {
 	CreateEquipment(ctx context.Context, eqp models.Equipment) (models.Equipment, error)
 	GetAllEquipment(ctx context.Context) ([]models.Equipment, error)
+	DeleteEquipmentById(ctx context.Context, equipmentId int) error
 }
 
 func NewEquipmentStore(db *sql.DB) EquipmentStorer {
@@ -121,62 +122,19 @@ func (e equipment) GetAllEquipment(ctx context.Context) ([]models.Equipment, err
 	return equipmentArr, nil
 }
 
-// func GetEquipmentsByUserId(userId int) ([]models.Equipment, error) {
+func (e equipment) DeleteEquipmentById(ctx context.Context, equipmentId int) error {
 
-// 	var equipment models.Equipment
-// 	var equipmentArr []models.Equipment
+	res, err := e.db.Exec(deleteEquipment, equipmentId)
 
-// 	list, err := DB.Query(equipmentsByUserId, userId)
+	if err != nil {
+		return fmt.Errorf("error while Deleting equipment: %v", err)
+	}
 
-// 	if err != nil {
-// 		err = fmt.Errorf("error while executing query: %v", err)
-// 		return equipmentArr, err
-// 	}
+	var count, _ = res.RowsAffected()
 
-// 	for list.Next() {
+	if count == 0 {
+		return fmt.Errorf("No Data Found Bad Request")
+	}
 
-// 		err := list.Scan(&equipment.ID,
-// 			&equipment.Name,
-// 			&equipment.Description,
-// 			&equipment.RentPerHour,
-// 			&equipment.Quantity,
-// 			&equipment.EquipmentImg,
-// 			&equipment.AvailableFrom,
-// 			&equipment.AvailableTill,
-// 			&equipment.Status,
-// 			&equipment.UploadedAt)
-
-// 		if err != nil {
-// 			err = fmt.Errorf("error while accessing DB: %v", err)
-// 			return equipmentArr, err
-// 		}
-
-// 		equipmentArr = append(equipmentArr, equipment)
-// 	}
-
-// 	return equipmentArr, nil
-// }
-
-// func DeleteEquipmentById(equipmentId int) error {
-
-// 	_, err := DB.Exec(deleteEquipment, equipmentId)
-
-// 	if err != nil {
-// 		return fmt.Errorf("error while Deleting equipment: %v", err)
-// 	}
-
-// 	return nil
-// }
-
-// func UpdateEquipment(equipmentId int, equipment models.Equipment) error {
-
-// 	_, err := DB.Exec(updateEquipment,
-// 		equipment.Name,
-// 		equipmentId)
-
-// 	if err != nil {
-// 		return fmt.Errorf("error while Deleting equipment: %v", err)
-// 	}
-
-// 	return nil
-// }
+	return nil
+}

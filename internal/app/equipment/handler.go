@@ -3,7 +3,9 @@ package equipment
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/utils"
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
@@ -16,6 +18,7 @@ type equipmentHandler struct {
 type Handler interface {
 	CreateEquipmentHandler(w http.ResponseWriter, r *http.Request)
 	ListEquipmentHandler(w http.ResponseWriter, r *http.Request)
+	DeleteEquipmentHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(service Service) Handler {
@@ -53,44 +56,25 @@ func (e *equipmentHandler) ListEquipmentHandler(w http.ResponseWriter, r *http.R
 	utils.HandleResponse(w, equipments, r)
 }
 
-// func (e *equipmentHandler)GetEquipmentsByUserIdHandler(w http.ResponseWriter, r *http.Request) {
+func (e *equipmentHandler) DeleteEquipmentHandler(w http.ResponseWriter, r *http.Request) {
 
-// 	id := r.PathValue("user_id")
-// 	userId, err := strconv.Atoi(id)
+	id := r.PathValue("equipment_id")
+	equipmentId, err := strconv.Atoi(id)
 
-// 	if err != nil {
-// 		resErr := fmt.Errorf("error while converting userId string into int: %v", err)
-// 		http.Error(w, resErr.Error(), http.StatusNotFound)
-// 	}
+	if err != nil {
+		resErr := fmt.Errorf("error while converting req param values form string into int: %v", err)
+		http.Error(w, resErr.Error(), http.StatusBadRequest)
+	}
 
-// 	equipments, err := repository.GetEquipmentsByUserId(userId)
+	err = e.eqipmentService.DeleteEquipmentById(context.Background(), equipmentId)
 
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusNotFound)
-// 	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-// 	utils.HandleResponse(w, equipments, r)
-// }
-
-// func DeleteEquipmentHandler(w http.ResponseWriter, r *http.Request) {
-
-// 	id := r.PathValue("equipment_id")
-// 	equipmentId, err := strconv.Atoi(id)
-
-// 	if err != nil {
-// 		resErr := fmt.Errorf("error while converting req param values form string into int: %v", err)
-// 		http.Error(w, resErr.Error(), http.StatusInternalServerError)
-// 	}
-
-// 	err = repository.DeleteEquipmentById(equipmentId)
-
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusNotFound)
-// 	}
-
-// 	utils.HandleResponse(w, "Equipment Deleted Successfully", r)
-
-// }
+	utils.HandleResponse(w, "Equipment Deleted Successfully", r)
+}
 
 // func UpdateEquipmentHandler(w http.ResponseWriter, r *http.Request) {
 

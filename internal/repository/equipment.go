@@ -45,6 +45,7 @@ type equipment struct {
 type EquipmentStorer interface {
 	CreateEquipment(ctx context.Context, eqp models.Equipment) (models.Equipment, error)
 	GetAllEquipment(ctx context.Context) ([]models.Equipment, error)
+	GetEquipmentsByUserId(ctx context.Context, userId int) ([]models.Equipment, error)
 }
 
 func NewEquipmentStore(db *sql.DB) EquipmentStorer {
@@ -121,41 +122,41 @@ func (e equipment) GetAllEquipment(ctx context.Context) ([]models.Equipment, err
 	return equipmentArr, nil
 }
 
-// func GetEquipmentsByUserId(userId int) ([]models.Equipment, error) {
+func (e equipment) GetEquipmentsByUserId(ctx context.Context, userId int) ([]models.Equipment, error) {
 
-// 	var equipment models.Equipment
-// 	var equipmentArr []models.Equipment
+	var equipment models.Equipment
+	var equipmentArr []models.Equipment
 
-// 	list, err := DB.Query(equipmentsByUserId, userId)
+	list, err := e.db.Query(equipmentsByUserId, userId)
 
-// 	if err != nil {
-// 		err = fmt.Errorf("error while executing query: %v", err)
-// 		return equipmentArr, err
-// 	}
+	if err != nil {
+		err = fmt.Errorf("error while executing query: %v", err)
+		return equipmentArr, err
+	}
 
-// 	for list.Next() {
+	for list.Next() {
 
-// 		err := list.Scan(&equipment.ID,
-// 			&equipment.Name,
-// 			&equipment.Description,
-// 			&equipment.RentPerHour,
-// 			&equipment.Quantity,
-// 			&equipment.EquipmentImg,
-// 			&equipment.AvailableFrom,
-// 			&equipment.AvailableTill,
-// 			&equipment.Status,
-// 			&equipment.UploadedAt)
+		err := list.Scan(&equipment.ID,
+			&equipment.Name,
+			&equipment.Description,
+			&equipment.RentPerHour,
+			&equipment.Quantity,
+			&equipment.EquipmentImg,
+			&equipment.AvailableFrom,
+			&equipment.AvailableTill,
+			&equipment.Status,
+			&equipment.UploadedAt)
 
-// 		if err != nil {
-// 			err = fmt.Errorf("error while accessing DB: %v", err)
-// 			return equipmentArr, err
-// 		}
+		if err != nil {
+			err = fmt.Errorf("error while accessing DB: %v", err)
+			return equipmentArr, err
+		}
 
-// 		equipmentArr = append(equipmentArr, equipment)
-// 	}
+		equipmentArr = append(equipmentArr, equipment)
+	}
 
-// 	return equipmentArr, nil
-// }
+	return equipmentArr, nil
+}
 
 // func DeleteEquipmentById(equipmentId int) error {
 

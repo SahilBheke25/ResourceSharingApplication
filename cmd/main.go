@@ -27,7 +27,7 @@ func main() {
 	// mux.HandleFunc("POST /register", user.Register)
 	mux.HandleFunc("POST /equipments", equipmentHandler.CreateEquipmentHandler)
 	mux.HandleFunc("GET /equipments", equipmentHandler.ListEquipmentHandler)
-	// mux.HandleFunc("GET /equipments/{user_id}", equipment.GetEquipmentsByUserIdHandler)
+	mux.HandleFunc("GET /equipments/{user_id}", equipmentHandler.GetEquipmentsByUserIdHandler)
 	// mux.HandleFunc("DELETE /equipments/{equipment_id}", equipment.DeleteEquipmentHandler)
 	// mux.HandleFunc("PUT /equipments/{equipment_id}", equipment.UpdateEquipmentHandler)
 

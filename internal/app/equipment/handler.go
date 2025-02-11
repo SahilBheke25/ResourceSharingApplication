@@ -3,7 +3,7 @@ package equipment
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -62,16 +62,16 @@ func (e *equipmentHandler) GetEquipmentsByUserIdHandler(w http.ResponseWriter, r
 	userId, err := strconv.Atoi(id)
 
 	if err != nil {
-		resErr := fmt.Errorf("error while converting userId string into int: %v", err)
-		http.Error(w, resErr.Error(), http.StatusBadRequest)
+		log.Printf("error while converting userId string into int: %v", err)
+		http.Error(w, "Invalid userId in path value", http.StatusBadRequest)
 		return
 	}
 
 	equipments, err := e.eqipmentService.GetEquipmentsByUserId(context.Background(), userId)
 
 	if err != nil {
-		resErr := fmt.Errorf("error while fetching data from the backend: %v", err)
-		http.Error(w, resErr.Error(), http.StatusInternalServerError)
+		log.Printf("error while fetching data from the backend: %v", err)
+		http.Error(w, "Error processing request", http.StatusInternalServerError)
 		return
 	}
 
@@ -82,54 +82,3 @@ func (e *equipmentHandler) GetEquipmentsByUserIdHandler(w http.ResponseWriter, r
 
 	utils.HandleResponse(w, equipments, r)
 }
-
-// func DeleteEquipmentHandler(w http.ResponseWriter, r *http.Request) {
-
-// 	id := r.PathValue("equipment_id")
-// 	equipmentId, err := strconv.Atoi(id)
-
-// 	if err != nil {
-// 		resErr := fmt.Errorf("error while converting req param values form string into int: %v", err)
-// 		http.Error(w, resErr.Error(), http.StatusInternalServerError)
-// 	}
-
-// 	err = repository.DeleteEquipmentById(equipmentId)
-
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusNotFound)
-// 	}
-
-// 	utils.HandleResponse(w, "Equipment Deleted Successfully", r)
-
-// }
-
-// func UpdateEquipmentHandler(w http.ResponseWriter, r *http.Request) {
-
-// 	id := r.PathValue("equipment_id")
-
-// 	equipmentId, err := strconv.Atoi(id)
-
-// 	if err != nil {
-// 		resErr := fmt.Errorf("error while converting equipment id param form string into int: %v", err)
-// 		http.Error(w, resErr.Error(), http.StatusInternalServerError)
-// 	}
-
-// 	var equipment models.Equipment
-
-// 	err = json.NewDecoder(r.Body).Decode(&equipment)
-
-// 	if err != nil {
-
-// 		http.Error(w, "Error while Decoding Request Body", http.StatusBadRequest)
-// 	}
-
-// 	err = repository.UpdateEquipment(equipmentId, equipment)
-
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	utils.HandleResponse(w, "Updated Equipment Successfully", r)
-
-// }

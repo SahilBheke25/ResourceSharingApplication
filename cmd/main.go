@@ -25,7 +25,7 @@ func main() {
 
 	mux.HandleFunc("POST /equipments", equipmentHandler.CreateEquipmentHandler)
 	mux.HandleFunc("GET /equipments", equipmentHandler.ListEquipmentHandler)
-	mux.HandleFunc("GET /user/{user_id}/equipments/lend", equipmentHandler.GetEquipmentsByUserIdHandler)
+	mux.HandleFunc("GET /equipments/{user_id}", equipmentHandler.GetEquipmentsByUserIdHandler)
 
 	log.Println("listning to port 3000")
 	log.Fatal(http.ListenAndServe(":3000", mux))

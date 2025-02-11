@@ -27,15 +27,16 @@ func main() {
 	userService := user.NewService(userRepo)
 	userHandler := user.NewHandler(userService)
 
-	mux := http.DefaultServeMux
-	mux.HandleFunc("POST /login", userHandler.VerifyUserHandler)
-	mux.HandleFunc("POST /register", userHandler.RegisterUserHandler)
-	mux.HandleFunc("POST /equipments", equipmentHandler.CreateEquipmentHandler)
-	mux.HandleFunc("GET /equipments", equipmentHandler.ListEquipmentHandler)
-	mux.HandleFunc("DELETE /equipments/{equipment_id}", equipmentHandler.DeleteEquipmentHandler)
-	mux.HandleFunc("PUT /equipments/{equipment_id}", equipmentHandler.UpdateEquipmentHandler)
+	router := http.DefaultServeMux
+
+	router.HandleFunc("POST /login", userHandler.VerifyUserHandler)
+	router.HandleFunc("POST /register", userHandler.RegisterUserHandler)
+	router.HandleFunc("POST /equipments", equipmentHandler.CreateEquipmentHandler)
+	router.HandleFunc("GET /equipments", equipmentHandler.ListEquipmentHandler)
+	router.HandleFunc("DELETE /equipments/{equipment_id}", equipmentHandler.DeleteEquipmentHandler)
+	router.HandleFunc("PUT /equipments/{equipment_id}", equipmentHandler.UpdateEquipmentHandler)
 
 	log.Println("listning to port 3000")
-	log.Fatal(http.ListenAndServe(":3000", mux))
+	log.Fatal(http.ListenAndServe(":3000", router))
 
 }

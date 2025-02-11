@@ -47,6 +47,7 @@ type equipment struct {
 type EquipmentStorer interface {
 	CreateEquipment(ctx context.Context, eqp models.Equipment) (models.Equipment, error)
 	GetAllEquipment(ctx context.Context) ([]models.Equipment, error)
+	DeleteEquipmentById(ctx context.Context, equipmentId int) error
 	UpdateEquipment(tx context.Context, equipmentId int, equipment models.Equipment) (models.Equipment, error)
 }
 
@@ -122,6 +123,23 @@ func (e equipment) GetAllEquipment(ctx context.Context) ([]models.Equipment, err
 	}
 
 	return equipmentArr, nil
+}
+
+func (e equipment) DeleteEquipmentById(ctx context.Context, equipmentId int) error {
+
+	res, err := e.db.Exec(deleteEquipment, equipmentId)
+
+	if err != nil {
+		return fmt.Errorf("error while Deleting equipment: %v", err)
+	}
+
+	var count, _ = res.RowsAffected()
+
+	if count == 0 {
+		return fmt.Errorf("no data found Bad Request")
+	}
+
+	return nil
 }
 
 func (e equipment) UpdateEquipment(ctx context.Context, equipmentId int, equipment models.Equipment) (models.Equipment, error) {

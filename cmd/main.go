@@ -32,6 +32,7 @@ func main() {
 	mux.HandleFunc("POST /register", userHandler.RegisterUserHandler)
 	mux.HandleFunc("POST /equipments", equipmentHandler.CreateEquipmentHandler)
 	mux.HandleFunc("GET /equipments", equipmentHandler.ListEquipmentHandler)
+	mux.HandleFunc("DELETE /equipments/{equipment_id}", equipmentHandler.DeleteEquipmentHandler)
 	mux.HandleFunc("PUT /equipments/{equipment_id}", equipmentHandler.UpdateEquipmentHandler)
 
 	log.Println("listning to port 3000")

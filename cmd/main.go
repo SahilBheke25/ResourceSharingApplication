@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/equipment"
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/user"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/repository"
 
@@ -22,7 +23,13 @@ func main() {
 	equipmentService := equipment.NewService(equipmentRepo)
 	equipmentHandler := equipment.NewHandler(equipmentService)
 
+	userRepo := repository.NewUserStorer(db)
+	userService := user.NewService(userRepo)
+	userHandler := user.NewHandler(userService)
+
 	mux := http.DefaultServeMux
+	mux.HandleFunc("POST /login", userHandler.VerifyUserHandler)
+	mux.HandleFunc("POST /register", userHandler.RegisterUserHandler)
 	mux.HandleFunc("POST /equipments", equipmentHandler.CreateEquipmentHandler)
 	mux.HandleFunc("GET /equipments", equipmentHandler.ListEquipmentHandler)
 	mux.HandleFunc("PUT /equipments/{equipment_id}", equipmentHandler.UpdateEquipmentHandler)

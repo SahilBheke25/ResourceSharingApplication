@@ -19,6 +19,7 @@ type Handler interface {
 	CreateEquipmentHandler(w http.ResponseWriter, r *http.Request)
 	ListEquipmentHandler(w http.ResponseWriter, r *http.Request)
 	DeleteEquipmentHandler(w http.ResponseWriter, r *http.Request)
+	UpdateEquipmentHandler(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(service Service) Handler {
@@ -106,3 +107,33 @@ func (e *equipmentHandler) DeleteEquipmentHandler(w http.ResponseWriter, r *http
 // 	utils.HandleResponse(w, "Updated Equipment Successfully", r)
 
 // }
+func (e *equipmentHandler) UpdateEquipmentHandler(w http.ResponseWriter, r *http.Request) {
+
+	id := r.PathValue("equipment_id")
+
+	equipmentId, err := strconv.Atoi(id)
+
+	if err != nil {
+		resErr := fmt.Errorf("error while converting equipment id param form string into int: %v", err)
+		http.Error(w, resErr.Error(), http.StatusInternalServerError)
+	}
+
+	var equipment models.Equipment
+
+	err = json.NewDecoder(r.Body).Decode(&equipment)
+
+	if err != nil {
+
+		http.Error(w, "Error while Decoding Request Body", http.StatusBadRequest)
+	}
+
+	resp, err := e.eqipmentService.UpdateEquipment(context.Background(), equipmentId, equipment)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.HandleResponse(w, resp, r)
+
+}

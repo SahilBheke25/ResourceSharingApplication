@@ -8,7 +8,7 @@ import (
 const (
 	host     = "localhost"
 	port     = 5432
-	user     = "postgres"
+	dbUser   = "postgres"
 	password = "aim"
 	dbname   = "resourcesharing"
 )
@@ -17,7 +17,7 @@ func InitializeDatabase() *sql.DB {
 	var DB *sql.DB
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
-		host, 5432, user, password, dbname)
+		host, 5432, dbUser, password, dbname)
 
 	var err error
 

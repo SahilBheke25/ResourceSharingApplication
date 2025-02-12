@@ -3,11 +3,8 @@ package equipment
 import (
 	"context"
 	"encoding/json"
-<<<<<<< HEAD
-	"log"
-=======
 	"fmt"
->>>>>>> 35bbbcf21d7713313548d29e1c9aff12e31efc5c
+	"log"
 	"net/http"
 	"strconv"
 
@@ -22,12 +19,9 @@ type equipmentHandler struct {
 type Handler interface {
 	CreateEquipmentHandler(w http.ResponseWriter, r *http.Request)
 	ListEquipmentHandler(w http.ResponseWriter, r *http.Request)
-<<<<<<< HEAD
 	GetEquipmentsByUserIdHandler(w http.ResponseWriter, r *http.Request)
-=======
 	DeleteEquipmentHandler(w http.ResponseWriter, r *http.Request)
 	UpdateEquipmentHandler(w http.ResponseWriter, r *http.Request)
->>>>>>> 35bbbcf21d7713313548d29e1c9aff12e31efc5c
 }
 
 func NewHandler(service Service) Handler {

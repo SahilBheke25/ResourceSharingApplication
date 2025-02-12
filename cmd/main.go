@@ -5,8 +5,9 @@ import (
 	"net/http"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/equipment"
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/user"
 
-	repository "github.com/SahilBheke25/ResourceSharingApplication/internal/repository"
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/repository"
 
 	_ "github.com/lib/pq"
 )
@@ -17,16 +18,26 @@ func main() {
 	db := repository.InitializeDatabase()
 	defer db.Close()
 
+	// Initialize Dependencies
 	equipmentRepo := repository.NewEquipmentStore(db)
 	equipmentService := equipment.NewService(equipmentRepo)
 	equipmentHandler := equipment.NewHandler(equipmentService)
 
-	mux := http.DefaultServeMux
+	userRepo := repository.NewUserStorer(db)
+	userService := user.NewService(userRepo)
+	userHandler := user.NewHandler(userService)
 
-	mux.HandleFunc("POST /equipments", equipmentHandler.CreateEquipmentHandler)
-	mux.HandleFunc("GET /equipments", equipmentHandler.ListEquipmentHandler)
-	mux.HandleFunc("GET /equipments/{user_id}", equipmentHandler.GetEquipmentsByUserIdHandler)
+	router := http.DefaultServeMux
+
+	router.HandleFunc("POST /login", userHandler.VerifyUserHandler)
+	router.HandleFunc("POST /register", userHandler.RegisterUserHandler)
+	router.HandleFunc("POST /equipments", equipmentHandler.CreateEquipmentHandler)
+	router.HandleFunc("GET /equipments", equipmentHandler.ListEquipmentHandler)
+	router.HandleFunc("DELETE /equipments/{equipment_id}", equipmentHandler.DeleteEquipmentHandler)
+	router.HandleFunc("PUT /equipments/{equipment_id}", equipmentHandler.UpdateEquipmentHandler)
+	router.HandleFunc("GET /equipments/{user_id}", equipmentHandler.GetEquipmentsByUserIdHandler)
 
 	log.Println("listning to port 3000")
-	log.Fatal(http.ListenAndServe(":3000", mux))
+	log.Fatal(http.ListenAndServe(":3000", router))
+
 }

@@ -25,6 +25,20 @@ const (
 							quantity, equipment_img, available_from, available_till, 
 							status, uploaded_at from equipments 
 							WHERE user_id = $1`
+
+	deleteEquipment = `DELETE FROM equipments WHERE id = $1`
+
+	updateEquipment = `UPDATE equipments SET equipment_name = $1,
+    					description = $2,
+    					rent_per_hour = $3,
+    					quantity = $4,
+   						status = $5,
+    					equipment_img = $6,
+    					available_from = $7,
+                        available_till = $8
+						WHERE id = $9
+						RETURNING id, equipment_name, description, rent_per_hour, quantity, 
+						equipment_img, available_from, available_till, status, uploaded_at`
 )
 
 type equipment struct {
@@ -35,6 +49,8 @@ type EquipmentStorer interface {
 	CreateEquipment(ctx context.Context, eqp models.Equipment) (models.Equipment, error)
 	GetAllEquipment(ctx context.Context) ([]models.Equipment, error)
 	GetEquipmentsByUserId(ctx context.Context, userId int) ([]models.Equipment, error)
+	DeleteEquipmentById(ctx context.Context, equipmentId int) error
+	UpdateEquipment(tx context.Context, equipmentId int, equipment models.Equipment) (models.Equipment, error)
 }
 
 func NewEquipmentStore(db *sql.DB) EquipmentStorer {
@@ -145,4 +161,57 @@ func (e equipment) GetEquipmentsByUserId(ctx context.Context, userId int) ([]mod
 	}
 
 	return equipmentArr, nil
+}
+
+func (e equipment) DeleteEquipmentById(ctx context.Context, equipmentId int) error {
+
+	res, err := e.db.Exec(deleteEquipment, equipmentId)
+
+	if err != nil {
+		return fmt.Errorf("error while Deleting equipment: %v", err)
+	}
+
+	var count, _ = res.RowsAffected()
+
+	if count == 0 {
+		return fmt.Errorf("no data found Bad Request")
+	}
+
+	return nil
+}
+
+func (e equipment) UpdateEquipment(ctx context.Context, equipmentId int, equipment models.Equipment) (models.Equipment, error) {
+
+	res := e.db.QueryRowContext(ctx, updateEquipment,
+		equipment.Name,
+		equipment.Description,
+		equipment.RentPerHour,
+		equipment.Quantity,
+		equipment.Status,
+		equipment.EquipmentImg,
+		equipment.AvailableFrom,
+		equipment.AvailableTill,
+		equipmentId)
+
+	err := res.Err()
+
+	if err != nil {
+		return models.Equipment{}, fmt.Errorf("error while Deleting equipment: %v", err)
+	}
+
+	var resp models.Equipment
+
+	res.Scan(
+		&resp.ID,
+		&resp.Name,
+		&resp.Description,
+		&resp.RentPerHour,
+		&resp.Quantity,
+		&resp.EquipmentImg,
+		&resp.AvailableFrom,
+		&resp.AvailableTill,
+		&resp.Status,
+		&resp.UploadedAt)
+
+	return resp, nil
 }

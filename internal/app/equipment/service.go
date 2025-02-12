@@ -16,6 +16,8 @@ type Service interface {
 	CreateEquipment(ctx context.Context, equipment models.Equipment) (models.Equipment, error)
 	GetAllEquipment(ctx context.Context) ([]models.Equipment, error)
 	GetEquipmentsByUserId(ctx context.Context, userId int) ([]models.Equipment, error)
+	DeleteEquipmentById(ctx context.Context, equipmentId int) error
+	UpdateEquipment(ctx context.Context, equipmentId int, equipment models.Equipment) (models.Equipment, error)
 }
 
 // constructor function to initialize service layer dependency for equipments
@@ -51,6 +53,30 @@ func (s service) GetEquipmentsByUserId(ctx context.Context, userId int) ([]model
 	if err != nil {
 		log.Println("error occured while calling get Equipment by user ID DB opeartion, err : ", err)
 		return []models.Equipment{}, err
+	}
+
+	return resp, nil
+}
+
+func (s service) DeleteEquipmentById(ctx context.Context, equipmentId int) error {
+
+	err := s.equipmentRepo.DeleteEquipmentById(ctx, equipmentId)
+
+	if err != nil {
+		log.Println("eerror while calling DeleteEquipmentById DB operation, err : ", err)
+		return err
+	}
+
+	return nil
+}
+
+func (s service) UpdateEquipment(ctx context.Context, equipmentId int, equipment models.Equipment) (models.Equipment, error) {
+
+	resp, err := s.equipmentRepo.UpdateEquipment(ctx, equipmentId, equipment)
+
+	if err != nil {
+		log.Println("error occured while calling Update Equipment DB opeartion, err : ", err)
+		return models.Equipment{}, err
 	}
 
 	return resp, nil

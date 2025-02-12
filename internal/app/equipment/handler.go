@@ -3,7 +3,11 @@ package equipment
 import (
 	"context"
 	"encoding/json"
+<<<<<<< HEAD
 	"log"
+=======
+	"fmt"
+>>>>>>> 35bbbcf21d7713313548d29e1c9aff12e31efc5c
 	"net/http"
 	"strconv"
 
@@ -18,7 +22,12 @@ type equipmentHandler struct {
 type Handler interface {
 	CreateEquipmentHandler(w http.ResponseWriter, r *http.Request)
 	ListEquipmentHandler(w http.ResponseWriter, r *http.Request)
+<<<<<<< HEAD
 	GetEquipmentsByUserIdHandler(w http.ResponseWriter, r *http.Request)
+=======
+	DeleteEquipmentHandler(w http.ResponseWriter, r *http.Request)
+	UpdateEquipmentHandler(w http.ResponseWriter, r *http.Request)
+>>>>>>> 35bbbcf21d7713313548d29e1c9aff12e31efc5c
 }
 
 func NewHandler(service Service) Handler {
@@ -81,4 +90,85 @@ func (e *equipmentHandler) GetEquipmentsByUserIdHandler(w http.ResponseWriter, r
 	}
 
 	utils.HandleResponse(w, equipments, r)
+}
+
+func (e *equipmentHandler) DeleteEquipmentHandler(w http.ResponseWriter, r *http.Request) {
+
+	id := r.PathValue("equipment_id")
+	equipmentId, err := strconv.Atoi(id)
+
+	if err != nil {
+		resErr := fmt.Errorf("error while converting req param values form string into int: %v", err)
+		http.Error(w, resErr.Error(), http.StatusBadRequest)
+	}
+
+	err = e.eqipmentService.DeleteEquipmentById(context.Background(), equipmentId)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.HandleResponse(w, "Equipment Deleted Successfully", r)
+}
+
+// func UpdateEquipmentHandler(w http.ResponseWriter, r *http.Request) {
+
+// 	id := r.PathValue("equipment_id")
+
+// 	equipmentId, err := strconv.Atoi(id)
+
+// 	if err != nil {
+// 		resErr := fmt.Errorf("error while converting equipment id param form string into int: %v", err)
+// 		http.Error(w, resErr.Error(), http.StatusInternalServerError)
+// 	}
+
+// 	var equipment models.Equipment
+
+// 	err = json.NewDecoder(r.Body).Decode(&equipment)
+
+// 	if err != nil {
+
+// 		http.Error(w, "Error while Decoding Request Body", http.StatusBadRequest)
+// 	}
+
+// 	err = repository.UpdateEquipment(equipmentId, equipment)
+
+// 	if err != nil {
+// 		http.Error(w, err.Error(), http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	utils.HandleResponse(w, "Updated Equipment Successfully", r)
+
+// }
+func (e *equipmentHandler) UpdateEquipmentHandler(w http.ResponseWriter, r *http.Request) {
+
+	id := r.PathValue("equipment_id")
+
+	equipmentId, err := strconv.Atoi(id)
+
+	if err != nil {
+		resErr := fmt.Errorf("error while converting equipment id param form string into int: %v", err)
+		http.Error(w, resErr.Error(), http.StatusInternalServerError)
+	}
+
+	var equipment models.Equipment
+
+	err = json.NewDecoder(r.Body).Decode(&equipment)
+
+	if err != nil {
+
+		http.Error(w, "Error while Decoding Request Body", http.StatusBadRequest)
+	}
+
+	resp, err := e.eqipmentService.UpdateEquipment(context.Background(), equipmentId, equipment)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.HandleResponse(w, resp, r)
+
 }

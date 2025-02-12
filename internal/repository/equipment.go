@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
 )
@@ -69,7 +70,7 @@ func (e equipment) CreateEquipment(ctx context.Context, eqp models.Equipment) (m
 	)
 	err := res.Err()
 	if err != nil {
-		fmt.Printf("error occured while making db reqeust for create quipment")
+		log.Println("error occured while making db reqeust for create quipment, err : ", err)
 		return models.Equipment{}, err
 	}
 
@@ -98,7 +99,7 @@ func (e equipment) GetAllEquipment(ctx context.Context) ([]models.Equipment, err
 	list, err := e.db.Query(getEquipments)
 
 	if err != nil {
-		err = fmt.Errorf("error while executing query: %v", err)
+		log.Println("error while executing query, err : ", err)
 		return equipmentArr, err
 	}
 
@@ -115,7 +116,7 @@ func (e equipment) GetAllEquipment(ctx context.Context) ([]models.Equipment, err
 			&equipment.UploadedAt)
 
 		if err != nil {
-			err = fmt.Errorf("error while accessing DB: %v", err)
+			log.Println("error while accessing DB, err : ", err)
 			return equipmentArr, err
 		}
 
@@ -130,7 +131,8 @@ func (e equipment) DeleteEquipmentById(ctx context.Context, equipmentId int) err
 	res, err := e.db.Exec(deleteEquipment, equipmentId)
 
 	if err != nil {
-		return fmt.Errorf("error while Deleting equipment: %v", err)
+		log.Println("error while Deleting equipment, err : ", err)
+		return err
 	}
 
 	var count, _ = res.RowsAffected()

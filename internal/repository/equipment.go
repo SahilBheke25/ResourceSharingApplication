@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
 )
@@ -47,6 +48,7 @@ type equipment struct {
 type EquipmentStorer interface {
 	CreateEquipment(ctx context.Context, eqp models.Equipment) (models.Equipment, error)
 	GetAllEquipment(ctx context.Context) ([]models.Equipment, error)
+	GetEquipmentsByUserId(ctx context.Context, userId int) ([]models.Equipment, error)
 	DeleteEquipmentById(ctx context.Context, equipmentId int) error
 	UpdateEquipment(tx context.Context, equipmentId int, equipment models.Equipment) (models.Equipment, error)
 }
@@ -116,6 +118,42 @@ func (e equipment) GetAllEquipment(ctx context.Context) ([]models.Equipment, err
 
 		if err != nil {
 			err = fmt.Errorf("error while accessing DB: %v", err)
+			return equipmentArr, err
+		}
+
+		equipmentArr = append(equipmentArr, equipment)
+	}
+
+	return equipmentArr, nil
+}
+
+func (e equipment) GetEquipmentsByUserId(ctx context.Context, userId int) ([]models.Equipment, error) {
+
+	var equipment models.Equipment
+	var equipmentArr []models.Equipment
+
+	list, err := e.db.Query(equipmentsByUserId, userId)
+
+	if err != nil {
+		log.Println("error while executing query, err : ", err)
+		return equipmentArr, err
+	}
+
+	for list.Next() {
+
+		err := list.Scan(&equipment.ID,
+			&equipment.Name,
+			&equipment.Description,
+			&equipment.RentPerHour,
+			&equipment.Quantity,
+			&equipment.EquipmentImg,
+			&equipment.AvailableFrom,
+			&equipment.AvailableTill,
+			&equipment.Status,
+			&equipment.UploadedAt)
+
+		if err != nil {
+			log.Println("error while accessing DB, err : ", err)
 			return equipmentArr, err
 		}
 

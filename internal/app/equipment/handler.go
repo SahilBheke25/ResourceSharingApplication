@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -18,6 +19,7 @@ type equipmentHandler struct {
 type Handler interface {
 	CreateEquipmentHandler(w http.ResponseWriter, r *http.Request)
 	ListEquipmentHandler(w http.ResponseWriter, r *http.Request)
+	GetEquipmentsByUserIdHandler(w http.ResponseWriter, r *http.Request)
 	DeleteEquipmentHandler(w http.ResponseWriter, r *http.Request)
 	UpdateEquipmentHandler(w http.ResponseWriter, r *http.Request)
 }
@@ -52,6 +54,33 @@ func (e *equipmentHandler) ListEquipmentHandler(w http.ResponseWriter, r *http.R
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNoContent)
+	}
+
+	utils.HandleResponse(w, equipments, r)
+}
+
+func (e *equipmentHandler) GetEquipmentsByUserIdHandler(w http.ResponseWriter, r *http.Request) {
+
+	id := r.PathValue("user_id")
+	userId, err := strconv.Atoi(id)
+
+	if err != nil {
+		log.Printf("error while converting userId string into int: %v", err)
+		http.Error(w, "Invalid userId in path value", http.StatusBadRequest)
+		return
+	}
+
+	equipments, err := e.eqipmentService.GetEquipmentsByUserId(context.Background(), userId)
+
+	if err != nil {
+		log.Printf("error while fetching data from the backend: %v", err)
+		http.Error(w, "Error processing request", http.StatusInternalServerError)
+		return
+	}
+
+	if len(equipments) == 0 {
+		utils.HandleResponse(w, "Data Not Found", r)
+		return
 	}
 
 	utils.HandleResponse(w, equipments, r)

@@ -15,6 +15,7 @@ type service struct {
 type Service interface {
 	CreateEquipment(ctx context.Context, equipment models.Equipment) (models.Equipment, error)
 	GetAllEquipment(ctx context.Context) ([]models.Equipment, error)
+	GetEquipmentsByUserId(ctx context.Context, userId int) ([]models.Equipment, error)
 	DeleteEquipmentById(ctx context.Context, equipmentId int) error
 	UpdateEquipment(ctx context.Context, equipmentId int, equipment models.Equipment) (models.Equipment, error)
 }
@@ -44,6 +45,17 @@ func (s service) GetAllEquipment(ctx context.Context) ([]models.Equipment, error
 
 	return resp, nil
 
+}
+
+func (s service) GetEquipmentsByUserId(ctx context.Context, userId int) ([]models.Equipment, error) {
+	resp, err := s.equipmentRepo.GetEquipmentsByUserId(ctx, userId)
+
+	if err != nil {
+		log.Println("error occured while calling get Equipment by user ID DB opeartion, err : ", err)
+		return []models.Equipment{}, err
+	}
+
+	return resp, nil
 }
 
 func (s service) DeleteEquipmentById(ctx context.Context, equipmentId int) error {

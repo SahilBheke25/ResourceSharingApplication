@@ -35,7 +35,6 @@ func (e *equipmentHandler) CreateEquipmentHandler(w http.ResponseWriter, r *http
 	err := json.NewDecoder(r.Body).Decode(&equipment)
 
 	if err != nil {
-
 		http.Error(w, "Error while Decoding Request Body", http.StatusBadRequest)
 	}
 
@@ -106,36 +105,6 @@ func (e *equipmentHandler) DeleteEquipmentHandler(w http.ResponseWriter, r *http
 	utils.HandleResponse(w, "Equipment Deleted Successfully", r)
 }
 
-// func UpdateEquipmentHandler(w http.ResponseWriter, r *http.Request) {
-
-// 	id := r.PathValue("equipment_id")
-
-// 	equipmentId, err := strconv.Atoi(id)
-
-// 	if err != nil {
-// 		resErr := fmt.Errorf("error while converting equipment id param form string into int: %v", err)
-// 		http.Error(w, resErr.Error(), http.StatusInternalServerError)
-// 	}
-
-// 	var equipment models.Equipment
-
-// 	err = json.NewDecoder(r.Body).Decode(&equipment)
-
-// 	if err != nil {
-
-// 		http.Error(w, "Error while Decoding Request Body", http.StatusBadRequest)
-// 	}
-
-// 	err = repository.UpdateEquipment(equipmentId, equipment)
-
-// 	if err != nil {
-// 		http.Error(w, err.Error(), http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	utils.HandleResponse(w, "Updated Equipment Successfully", r)
-
-// }
 func (e *equipmentHandler) UpdateEquipmentHandler(w http.ResponseWriter, r *http.Request) {
 
 	id := r.PathValue("equipment_id")
@@ -152,7 +121,7 @@ func (e *equipmentHandler) UpdateEquipmentHandler(w http.ResponseWriter, r *http
 	err = json.NewDecoder(r.Body).Decode(&equipment)
 
 	if err != nil {
-
+		log.Println("error in handler while parsing request body, err : ", err)
 		http.Error(w, "Error while Decoding Request Body", http.StatusBadRequest)
 	}
 

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/equipment"
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/rental"
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/user"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/repository"
@@ -27,6 +28,10 @@ func main() {
 	userService := user.NewService(userRepo)
 	userHandler := user.NewHandler(userService)
 
+	rentalRepo := repository.NewRentalStore(db)
+	rentalService := rental.NewService(rentalRepo)
+	rentalHandler := rental.NewHandler(rentalService)
+
 	router := http.DefaultServeMux
 
 	router.HandleFunc("POST /login", userHandler.VerifyUserHandler)
@@ -35,6 +40,7 @@ func main() {
 	router.HandleFunc("GET /equipments", equipmentHandler.ListEquipmentHandler)
 	router.HandleFunc("DELETE /equipments/{equipment_id}", equipmentHandler.DeleteEquipmentHandler)
 	router.HandleFunc("PUT /equipments/{equipment_id}", equipmentHandler.UpdateEquipmentHandler)
+	router.HandleFunc("POST /users/{user_id}/equipments/{equip_id}/rent", rentalHandler.RentEquipment)
 	router.HandleFunc("GET /equipments/{user_id}", equipmentHandler.GetEquipmentsByUserIdHandler)
 
 	log.Println("listning to port 3000")

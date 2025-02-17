@@ -29,7 +29,7 @@ func main() {
 	userHandler := user.NewHandler(userService)
 
 	rentalRepo := repository.NewRentalStore(db)
-	rentalService := rental.NewService(rentalRepo)
+	rentalService := rental.NewService(rentalRepo, equipmentService)
 	rentalHandler := rental.NewHandler(rentalService)
 
 	router := http.DefaultServeMux
@@ -41,7 +41,8 @@ func main() {
 	router.HandleFunc("DELETE /equipments/{equipment_id}", equipmentHandler.DeleteEquipmentHandler)
 	router.HandleFunc("PUT /equipments/{equipment_id}", equipmentHandler.UpdateEquipmentHandler)
 	router.HandleFunc("POST /users/{user_id}/equipments/{equip_id}/rent", rentalHandler.RentEquipment)
-	router.HandleFunc("GET /equipments/{user_id}", equipmentHandler.GetEquipmentsByUserIdHandler)
+	router.HandleFunc("GET /users/{user_id}/equipments/lended", equipmentHandler.GetEquipmentsByUserIdHandler)
+	router.HandleFunc("GET /equipments/{equipment_id}", equipmentHandler.EquipmentById)
 
 	log.Println("listning to port 3000")
 	log.Fatal(http.ListenAndServe(":3000", router))

@@ -41,7 +41,7 @@ func main() {
 	router.HandleFunc("DELETE /equipments/{equipment_id}", equipmentHandler.DeleteEquipmentHandler)
 	router.HandleFunc("PUT /equipments/{equipment_id}", equipmentHandler.UpdateEquipmentHandler)
 	router.HandleFunc("POST /users/{user_id}/equipments/{equip_id}/rent", rentalHandler.RentEquipment)
-	router.HandleFunc("GET /equipments/{user_id}", equipmentHandler.GetEquipmentsByUserIdHandler)
+	router.HandleFunc("GET /users/{user_id}/equipments/lended", equipmentHandler.GetEquipmentsByUserIdHandler)
 
 	log.Println("listning to port 3000")
 	log.Fatal(http.ListenAndServe(":3000", router))

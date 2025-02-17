@@ -12,15 +12,11 @@ import (
 
 const (
 	createRental = `INSERT INTO rental(quantity, rent_at, rent_till, duration, equip_id, user_id) 
-					VALUES($1, $2, $3, $4, $5, $6)
-					RETURNING id, quantity, rent_at, rent_till, duration, equip_id, user_id`
+									VALUES($1, $2, $3, $4, $5, $6)
+									RETURNING id, quantity, rent_at, rent_till, duration, equip_id, user_id`
 
-	getEquipmentQuantity = `SELECT quantity from equipments WHERE id = $1`
-	getEquipmentCharges  = `SELECT rent_per_hour from equipments WHERE id = $1`
-	createNewBill        = `INSERT	INTO billing(total_amount, rent_id) VALUES($1, $2)
-							RETURNING id, payment_date, total_amount, rent_id`
-	descreaseQuantity = `UPDATE equipments SET quantity = quantity - $1
-						WHERE id = $2`
+	createNewBill = `INSERT	INTO billing(total_amount, rent_id) VALUES($1, $2)
+										RETURNING id, payment_date, total_amount, rent_id`
 )
 
 type Rental struct {

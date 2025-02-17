@@ -11,34 +11,36 @@ import (
 
 const (
 	createEquipment = `INSERT INTO equipments (
-						  	equipment_name, description, rent_per_hour, quantity, 
-							equipment_img, available_from, available_till, user_id) 
-							VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
-							RETURNING id, equipment_name, description, rent_per_hour, quantity, 
-							equipment_img, available_from, available_till, status, uploaded_at`
+						  				equipment_name, description, rent_per_day, quantity, equipment_img, user_id) 
+											VALUES ($1, $2, $3, $4, $5, $6) 
+											RETURNING id, equipment_name, description, rent_per_day, quantity, 
+											equipment_img, status, uploaded_at`
 
-	getEquipments = `SELECT equipment_name, description, rent_per_hour, quantity, 
-						  	equipment_img, available_from, available_till, status, 
-							uploaded_at from equipments`
+	getEquipments = `SELECT equipment_name, description, rent_per_day, quantity, 
+						  			equipment_img, status, uploaded_at from equipments`
 
-	equipmentsByUserId = `SELECT id, equipment_name, description, rent_per_hour, 
-							quantity, equipment_img, available_from, available_till, 
-							status, uploaded_at from equipments 
-							WHERE user_id = $1`
+	equipmentsByUserId = `SELECT id, equipment_name, description, rent_per_day, 
+												quantity, equipment_img, status, uploaded_at from equipments 
+												WHERE user_id = $1`
 
 	deleteEquipment = `DELETE FROM equipments WHERE id = $1`
 
 	updateEquipment = `UPDATE equipments SET equipment_name = $1,
-    					description = $2,
-    					rent_per_hour = $3,
-    					quantity = $4,
-   						status = $5,
-    					equipment_img = $6,
-    					available_from = $7,
-                        available_till = $8
-						WHERE id = $9
-						RETURNING id, equipment_name, description, rent_per_hour, quantity, 
-						equipment_img, available_from, available_till, status, uploaded_at`
+    									description = $2,
+    									rent_per_day = $3,
+    									quantity = $4,
+   										status = $5,
+    									equipment_img = $6
+											WHERE id = $7
+											RETURNING id, equipment_name, description, rent_per_day, quantity, 
+											equipment_img, status, uploaded_at`
+
+	getEquipmentQuantity = `SELECT quantity from equipments WHERE id = $1`
+
+	getEquipmentCharges = `SELECT rent_per_day from equipments WHERE id = $1`
+
+	descreaseQuantity = `UPDATE equipments SET quantity = quantity - $1
+												WHERE id = $2`
 )
 
 type equipment struct {
@@ -62,11 +64,9 @@ func (e equipment) CreateEquipment(ctx context.Context, eqp models.Equipment) (m
 	res := e.db.QueryRowContext(ctx, createEquipment,
 		eqp.Name,
 		eqp.Description,
-		eqp.RentPerHour,
+		eqp.RentPerDay,
 		eqp.Quantity,
 		eqp.EquipmentImg,
-		eqp.AvailableFrom,
-		eqp.AvailableTill,
 		eqp.UserId,
 	)
 	err := res.Err()
@@ -81,11 +81,9 @@ func (e equipment) CreateEquipment(ctx context.Context, eqp models.Equipment) (m
 		&resp.ID,
 		&resp.Name,
 		&resp.Description,
-		&resp.RentPerHour,
+		&resp.RentPerDay,
 		&resp.Quantity,
 		&resp.EquipmentImg,
-		&resp.AvailableFrom,
-		&resp.AvailableTill,
 		&resp.Status,
 		&resp.UploadedAt)
 
@@ -108,11 +106,9 @@ func (e equipment) GetAllEquipment(ctx context.Context) ([]models.Equipment, err
 
 		err := list.Scan(&equipment.Name,
 			&equipment.Description,
-			&equipment.RentPerHour,
+			&equipment.RentPerDay,
 			&equipment.Quantity,
 			&equipment.EquipmentImg,
-			&equipment.AvailableFrom,
-			&equipment.AvailableTill,
 			&equipment.Status,
 			&equipment.UploadedAt)
 
@@ -144,11 +140,9 @@ func (e equipment) GetEquipmentsByUserId(ctx context.Context, userId int) ([]mod
 		err := list.Scan(&equipment.ID,
 			&equipment.Name,
 			&equipment.Description,
-			&equipment.RentPerHour,
+			&equipment.RentPerDay,
 			&equipment.Quantity,
 			&equipment.EquipmentImg,
-			&equipment.AvailableFrom,
-			&equipment.AvailableTill,
 			&equipment.Status,
 			&equipment.UploadedAt)
 
@@ -186,12 +180,10 @@ func (e equipment) UpdateEquipment(ctx context.Context, equipmentId int, equipme
 	res := e.db.QueryRowContext(ctx, updateEquipment,
 		equipment.Name,
 		equipment.Description,
-		equipment.RentPerHour,
+		equipment.RentPerDay,
 		equipment.Quantity,
 		equipment.Status,
 		equipment.EquipmentImg,
-		equipment.AvailableFrom,
-		equipment.AvailableTill,
 		equipmentId)
 
 	err := res.Err()
@@ -206,11 +198,9 @@ func (e equipment) UpdateEquipment(ctx context.Context, equipmentId int, equipme
 		&resp.ID,
 		&resp.Name,
 		&resp.Description,
-		&resp.RentPerHour,
+		&resp.RentPerDay,
 		&resp.Quantity,
 		&resp.EquipmentImg,
-		&resp.AvailableFrom,
-		&resp.AvailableTill,
 		&resp.Status,
 		&resp.UploadedAt)
 

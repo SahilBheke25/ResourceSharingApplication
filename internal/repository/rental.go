@@ -26,7 +26,7 @@ type Rental struct {
 type RentalStorer interface {
 	RentEquipment(ctx context.Context, rental models.Rental) (models.Rental, error)
 	EquipmentQuantity(ctx context.Context, equipId int) (int, error)
-	EquipmentCharges(ctx context.Context, equipId int) (int, error)
+	EquipmentCharges(ctx context.Context, equipId int) (float64, error)
 	CreateBill(ctx context.Context, billing models.Billing) (models.Billing, error)
 	UpdateQuantity(ctx context.Context, equip_id int, quantity int) error
 }
@@ -54,14 +54,19 @@ func (r Rental) RentEquipment(ctx context.Context, rental models.Rental) (models
 
 	var resp models.Rental
 
-	res.Scan(
+	err = res.Scan(
 		&resp.Id,
-		&resp.Quantity,
+		// &resp.Quantity,
 		&resp.RentAt,
 		&resp.RentTill,
 		&resp.Duration,
 		&resp.EquipId,
 		&resp.UserId)
+
+	if err != nil {
+		log.Println("error occured scanning created rented details, err : ", err)
+		return models.Rental{}, err
+	}
 
 	return resp, nil
 }
@@ -90,7 +95,7 @@ func (r Rental) EquipmentQuantity(ctx context.Context, equipId int) (int, error)
 	return quantity, nil
 }
 
-func (r Rental) EquipmentCharges(ctx context.Context, equipId int) (int, error) {
+func (r Rental) EquipmentCharges(ctx context.Context, equipId int) (float64, error) {
 
 	res, err := r.db.Query(getEquipmentCharges, equipId)
 
@@ -99,17 +104,17 @@ func (r Rental) EquipmentCharges(ctx context.Context, equipId int) (int, error) 
 		return 0, err
 	}
 
-	var rentPerHour int
+	var rentPerDay float64
 
 	res.Next()
-	err = res.Scan(&rentPerHour)
+	err = res.Scan(&rentPerDay)
 
 	if err != nil {
 		log.Println("error while scaning rentcharger DB row, err : ", err)
 		return 0, err
 	}
 
-	return rentPerHour, nil
+	return rentPerDay, nil
 }
 
 func (r Rental) CreateBill(ctx context.Context, billing models.Billing) (models.Billing, error) {
@@ -117,7 +122,7 @@ func (r Rental) CreateBill(ctx context.Context, billing models.Billing) (models.
 	res, err := r.db.Query(createNewBill, billing.Amount, billing.RentId)
 
 	if err != nil {
-		log.Println("error while fetching equipment quantity, err : ", err)
+		log.Println("error while creating bill, err : ", err)
 		return models.Billing{}, apperrors.ErrDbExce
 	}
 	res.Next()

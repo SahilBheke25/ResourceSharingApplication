@@ -39,7 +39,7 @@ func (s service) RentEquipment(ctx context.Context, rental models.Rental) (model
 		return models.Billing{}, apperrors.ErrQuantityNotAvailable
 	}
 
-	rentPerHour, err := s.rentalRepo.EquipmentCharges(ctx, rental.EquipId)
+	rentPerDay, err := s.rentalRepo.EquipmentCharges(ctx, rental.EquipId)
 
 	if err != nil {
 		return models.Billing{}, err
@@ -60,7 +60,7 @@ func (s service) RentEquipment(ctx context.Context, rental models.Rental) (model
 
 	var billing models.Billing
 
-	billing.Amount = duration * float64(rentPerHour)
+	billing.Amount = duration * rentPerDay
 	billing.RentId = resp.Id
 
 	bill, _ := s.rentalRepo.CreateBill(ctx, billing)

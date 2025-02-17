@@ -18,6 +18,7 @@ type Service interface {
 	GetEquipmentsByUserId(ctx context.Context, userId int) ([]models.Equipment, error)
 	DeleteEquipmentById(ctx context.Context, equipmentId int) error
 	UpdateEquipment(ctx context.Context, equipmentId int, equipment models.Equipment) (models.Equipment, error)
+	EquipmentById(ctx context.Context, equipId int) (models.Equipment, error)
 }
 
 // constructor function to initialize service layer dependency for equipments
@@ -76,6 +77,17 @@ func (s service) UpdateEquipment(ctx context.Context, equipmentId int, equipment
 
 	if err != nil {
 		log.Println("error occured while calling Update Equipment DB opeartion, err : ", err)
+		return models.Equipment{}, err
+	}
+
+	return resp, nil
+}
+
+func (s service) EquipmentById(ctx context.Context, equipId int) (models.Equipment, error) {
+
+	resp, err := s.equipmentRepo.EquipmentById(ctx, equipId)
+	if err != nil {
+		log.Panicln("error occured during calling EquipmentById DB operation, err : ", err)
 		return models.Equipment{}, err
 	}
 

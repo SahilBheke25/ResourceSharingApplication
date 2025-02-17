@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/pkg/apperrors"
 )
 
 const (
@@ -41,6 +42,8 @@ const (
 
 	descreaseQuantity = `UPDATE equipments SET quantity = quantity - $1
 												WHERE id = $2`
+
+	equipmentById = `SELECT id, equipment_name, description, rent_per_day, quantity, equipment_img, status, uploaded_at, user_id FROM equipments WHERE id = $1`
 )
 
 type equipment struct {
@@ -51,8 +54,9 @@ type EquipmentStorer interface {
 	CreateEquipment(ctx context.Context, eqp models.Equipment) (models.Equipment, error)
 	GetAllEquipment(ctx context.Context) ([]models.Equipment, error)
 	GetEquipmentsByUserId(ctx context.Context, userId int) ([]models.Equipment, error)
-	DeleteEquipmentById(ctx context.Context, equipmentId int) error
-	UpdateEquipment(tx context.Context, equipmentId int, equipment models.Equipment) (models.Equipment, error)
+	DeleteEquipmentById(ctx context.Context, equipId int) error
+	UpdateEquipment(tx context.Context, equipId int, equipment models.Equipment) (models.Equipment, error)
+	EquipmentById(ctx context.Context, equipId int) (models.Equipment, error)
 }
 
 func NewEquipmentStore(db *sql.DB) EquipmentStorer {
@@ -157,9 +161,9 @@ func (e equipment) GetEquipmentsByUserId(ctx context.Context, userId int) ([]mod
 	return equipmentArr, nil
 }
 
-func (e equipment) DeleteEquipmentById(ctx context.Context, equipmentId int) error {
+func (e equipment) DeleteEquipmentById(ctx context.Context, equipId int) error {
 
-	res, err := e.db.Exec(deleteEquipment, equipmentId)
+	res, err := e.db.Exec(deleteEquipment, equipId)
 
 	if err != nil {
 		log.Println("error while Deleting equipment, err : ", err)
@@ -175,7 +179,7 @@ func (e equipment) DeleteEquipmentById(ctx context.Context, equipmentId int) err
 	return nil
 }
 
-func (e equipment) UpdateEquipment(ctx context.Context, equipmentId int, equipment models.Equipment) (models.Equipment, error) {
+func (e equipment) UpdateEquipment(ctx context.Context, equipId int, equipment models.Equipment) (models.Equipment, error) {
 
 	res := e.db.QueryRowContext(ctx, updateEquipment,
 		equipment.Name,
@@ -184,7 +188,7 @@ func (e equipment) UpdateEquipment(ctx context.Context, equipmentId int, equipme
 		equipment.Quantity,
 		equipment.Status,
 		equipment.EquipmentImg,
-		equipmentId)
+		equipId)
 
 	err := res.Err()
 
@@ -194,7 +198,7 @@ func (e equipment) UpdateEquipment(ctx context.Context, equipmentId int, equipme
 
 	var resp models.Equipment
 
-	res.Scan(
+	err = res.Scan(
 		&resp.ID,
 		&resp.Name,
 		&resp.Description,
@@ -203,6 +207,36 @@ func (e equipment) UpdateEquipment(ctx context.Context, equipmentId int, equipme
 		&resp.EquipmentImg,
 		&resp.Status,
 		&resp.UploadedAt)
+
+	if err != nil {
+		log.Println("error while scaning query result in update equipment, err : ", err)
+		return models.Equipment{}, apperrors.ErrDbScan
+	}
+
+	return resp, nil
+}
+
+func (e equipment) EquipmentById(ctx context.Context, equipId int) (models.Equipment, error) {
+
+	res := e.db.QueryRow(equipmentById, equipId)
+
+	var resp models.Equipment
+
+	err := res.Scan(
+		&resp.ID,
+		&resp.Name,
+		&resp.Description,
+		&resp.RentPerDay,
+		&resp.Quantity,
+		&resp.EquipmentImg,
+		&resp.Status,
+		&resp.UploadedAt,
+		&resp.UserId)
+
+	if err != nil {
+		log.Println("error while scaning query result in equipmentById, err : ", err)
+		return models.Equipment{}, apperrors.ErrDbScan
+	}
 
 	return resp, nil
 }

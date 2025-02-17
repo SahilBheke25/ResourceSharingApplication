@@ -10,6 +10,7 @@ import (
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/utils"
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/pkg/apperrors"
 )
 
 type equipmentHandler struct {
@@ -22,6 +23,7 @@ type Handler interface {
 	GetEquipmentsByUserIdHandler(w http.ResponseWriter, r *http.Request)
 	DeleteEquipmentHandler(w http.ResponseWriter, r *http.Request)
 	UpdateEquipmentHandler(w http.ResponseWriter, r *http.Request)
+	EquipmentById(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(service Service) Handler {
@@ -127,6 +129,27 @@ func (e *equipmentHandler) UpdateEquipmentHandler(w http.ResponseWriter, r *http
 
 	resp, err := e.eqipmentService.UpdateEquipment(context.Background(), equipmentId, equipment)
 
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	utils.HandleResponse(w, resp, r)
+
+}
+
+func (e *equipmentHandler) EquipmentById(w http.ResponseWriter, r *http.Request) {
+
+	id := r.PathValue("equipment_id")
+
+	equipId, err := strconv.Atoi(id)
+
+	if err != nil {
+		log.Println("error while converting equipment id param form string into int, err : ", err)
+		http.Error(w, apperrors.ErrAtoi.Error(), http.StatusInternalServerError)
+	}
+
+	resp, err := e.eqipmentService.EquipmentById(context.Background(), equipId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

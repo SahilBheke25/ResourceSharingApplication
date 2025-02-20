@@ -34,8 +34,10 @@ func main() {
 
 	router := http.DefaultServeMux
 
-	router.HandleFunc("POST /login", userHandler.VerifyUserHandler)
-	router.HandleFunc("POST /register", userHandler.RegisterUserHandler)
+	router.HandleFunc("POST /user/login", userHandler.Login)
+	router.HandleFunc("POST /user/register", userHandler.Register)
+	// router.HandleFunc("GET /user/{user_id}/edit-profile")
+
 	router.HandleFunc("POST /equipments", equipmentHandler.CreateEquipmentHandler)
 	router.HandleFunc("GET /equipments", equipmentHandler.ListEquipmentHandler)
 	router.HandleFunc("DELETE /equipments/{equipment_id}", equipmentHandler.DeleteEquipmentHandler)

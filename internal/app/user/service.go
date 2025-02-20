@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/pkg/apperrors"
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/repository"
 )
 
@@ -15,8 +16,8 @@ type service struct {
 }
 
 type Service interface {
-	AuthenticateUser(ctx context.Context, username, password string) (bool, error)
-	CreateUser(ctx context.Context, user models.User) error
+	Authenticate(ctx context.Context, username, password string) (bool, error)
+	RegisterUser(ctx context.Context, user models.User) error
 	ValidateUser(ctx context.Context, user models.User) (bool, error)
 }
 
@@ -26,21 +27,26 @@ func NewService(user repository.UserStorer) Service {
 
 }
 
-func (s service) AuthenticateUser(ctx context.Context, username, password string) (bool, error) {
+func (s service) Authenticate(ctx context.Context, username, password string) (bool, error) {
 
-	resp, err := s.userRepo.AuthenticateUser(ctx, username, password)
+	resp, err := s.userRepo.GetUserByUsername(ctx, username)
 
 	if err != nil {
-		log.Println("error occured while calling AuthenticateUser DB opeartion, err : ", err)
-		return resp, err
+		log.Println("error occured while calling getUserByUsername DB opeartion, err : ", err)
+		return false, err
 	}
-	return resp, nil
+
+	if resp.Password != password {
+		return false, apperrors.ErrInvalidCredentials
+	}
+
+	return true, nil
 
 }
 
-func (s service) CreateUser(ctx context.Context, user models.User) error {
+func (s service) RegisterUser(ctx context.Context, user models.User) error {
 
-	err := s.userRepo.CreateUser(ctx, user)
+	err := s.userRepo.RegisterUser(ctx, user)
 
 	if err != nil {
 		log.Println("error occured while calling CreateUser DB opeartion, err : ", err)

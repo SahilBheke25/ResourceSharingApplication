@@ -3,11 +3,13 @@ package user
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
+	"log"
 	"net/http"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/utils"
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/pkg/apperrors"
 )
 
 type userHandler struct {
@@ -15,40 +17,44 @@ type userHandler struct {
 }
 
 type Handler interface {
-	VerifyUserHandler(w http.ResponseWriter, r *http.Request)
-	RegisterUserHandler(w http.ResponseWriter, r *http.Request)
+	Login(w http.ResponseWriter, r *http.Request)
+	Register(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(service Service) Handler {
 	return &userHandler{userService: service}
 }
 
-func (u *userHandler) VerifyUserHandler(w http.ResponseWriter, r *http.Request) {
+func (u *userHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
-	var user models.User
-
 	// Reading json request
+	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		err = fmt.Errorf("error while decoding request body: %v", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Println("error while decoding request body, err : ", err)
+		utils.ErrorResponse(context.Background(), w, http.StatusBadRequest, apperrors.ErrInvalidReqBody)
 		return
 	}
 
 	// Authenticating User
-	verified, err := u.userService.AuthenticateUser(context.Background(), user.Username, user.Password)
-	if err != nil || !verified {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
+	_, err = u.userService.Authenticate(context.Background(), user.Username, user.Password)
+	if err != nil {
+		log.Println("error while authenticating user credentials, err : ", err)
+		if errors.Is(err, apperrors.ErrInvalidCredentials) {
+			utils.ErrorResponse(context.Background(), w, http.StatusUnauthorized, err)
+			return
+		} else {
+			utils.ErrorResponse(context.Background(), w, http.StatusInternalServerError, err)
+			return
+		}
 	}
 
-	utils.HandleResponse(w, "User Verifed Successfully", r)
-
+	utils.SuccessResponse(context.Background(), w, http.StatusOK, "User Verifed Successfully")
 }
 
-func (u *userHandler) RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
+func (u *userHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	// Ensure body gets closed
 	defer r.Body.Close()
@@ -69,7 +75,7 @@ func (u *userHandler) RegisterUserHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	// create user & checks if user already exist.
-	err = u.userService.CreateUser(context.Background(), user)
+	err = u.userService.RegisterUser(context.Background(), user)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

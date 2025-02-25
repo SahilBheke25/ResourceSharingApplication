@@ -63,7 +63,7 @@ func (u *userHandler) Register(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&user)
 
 	if err != nil {
-		http.Error(w, "Error unmarshalling request body", http.StatusInternalServerError)
+		utils.ErrorResponse(context.Background(), w, http.StatusBadRequest, apperrors.ErrInvalidReqBody)
 		return
 	}
 

@@ -26,7 +26,6 @@ func NewHandler(service Service) Handler {
 }
 
 func (u *userHandler) Login(w http.ResponseWriter, r *http.Request) {
-
 	defer r.Body.Close()
 
 	// Reading json request

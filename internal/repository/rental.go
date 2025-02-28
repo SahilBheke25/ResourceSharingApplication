@@ -104,7 +104,7 @@ func (r Rental) RentEquipment(ctx context.Context, rental models.Rental, availab
 	bill.RentId = respRental.Id
 
 	// create bill
-	resp, err := r.CreateBill(ctx, tx, bill)
+	resp, err := r.createBill(ctx, tx, bill)
 	if err != nil {
 		log.Println("error while calling create bill, err : ", err)
 		return models.Billing{}, err
@@ -155,7 +155,7 @@ func (r Rental) EquipmentCharges(ctx context.Context, equipId int) (float64, err
 	return rentPerDay, nil
 }
 
-func (r Rental) CreateBill(ctx context.Context, tx *sql.Tx, billing models.Billing) (models.Billing, error) {
+func (r Rental) createBill(ctx context.Context, tx *sql.Tx, billing models.Billing) (models.Billing, error) {
 
 	res := tx.QueryRow(createNewBill, billing.Amount, billing.RentId)
 

@@ -27,7 +27,7 @@ func NewHandler(service Service) Handler {
 
 func (u *userHandler) Login(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-
+	log.Println("Call from frontend")
 	// Reading json request
 	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user)

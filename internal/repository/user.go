@@ -66,7 +66,6 @@ func (u user) GetUserByUsername(ctx context.Context, userName string) (models.Us
 	var user models.UserCredentials
 
 	err := u.db.QueryRow(userByusername, userName).Scan(&user.Password)
-
 	if err == sql.ErrNoRows {
 		log.Println("error while scanning data, err : ", err)
 		return models.UserCredentials{}, apperrors.ErrInvalidCredentials

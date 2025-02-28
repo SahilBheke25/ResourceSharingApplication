@@ -26,8 +26,9 @@ func NewHandler(service Service) Handler {
 }
 
 func (u *userHandler) Login(w http.ResponseWriter, r *http.Request) {
+
 	defer r.Body.Close()
-	log.Println("Call from frontend")
+
 	// Reading json request
 	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user)
@@ -55,27 +56,25 @@ func (u *userHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 func (u *userHandler) Register(w http.ResponseWriter, r *http.Request) {
 
-	// Ensure body gets closed
 	defer r.Body.Close()
 
+	// Reading json request
 	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user)
-
 	if err != nil {
 		utils.ErrorResponse(context.Background(), w, http.StatusBadRequest, apperrors.ErrInvalidReqBody)
 		return
 	}
 
 	// Validating user data
-	_, err = u.userService.ValidateUser(context.Background(), user)
+	_, err = user.ValidateUser(context.Background(), user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotAcceptable)
 		return
 	}
 
-	// create user & checks if user already exist.
+	// Create user & checks if user already exist.
 	err = u.userService.RegisterUser(context.Background(), user)
-
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

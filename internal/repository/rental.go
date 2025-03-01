@@ -27,8 +27,6 @@ type RentalStorer interface {
 	RentEquipment(ctx context.Context, rental models.Rental, availableQantity int, rentPerDay float64) (models.Billing, error)
 	EquipmentQuantity(ctx context.Context, equipId int) (int, error)
 	EquipmentCharges(ctx context.Context, equipId int) (float64, error)
-	// CreateBill(ctx context.Context, billing models.Billing) (models.Billing, error)
-	// UpdateQuantity(ctx context.Context, equip_id int, quantity int) error
 }
 
 func NewRentalStore(db *sql.DB) RentalStorer {
@@ -37,6 +35,7 @@ func NewRentalStore(db *sql.DB) RentalStorer {
 
 func (r Rental) RentEquipment(ctx context.Context, rental models.Rental, availableQantity int, rentPerDay float64) (models.Billing, error) {
 
+	// Transaction
 	tx, err := r.db.Begin()
 	if err != nil {
 		log.Println("error occured")
@@ -91,8 +90,7 @@ func (r Rental) RentEquipment(ctx context.Context, rental models.Rental, availab
 	}
 
 	// Update quantity
-	err = r.UpdateQuantity(ctx, tx, respRental.EquipId, respRental.Quantity)
-	// _, err = r.db.Exec(descreaseQuantity, respRental.Quantity, respRental.EquipId)
+	err = r.updateQuantity(ctx, tx, respRental.EquipId, respRental.Quantity)
 	if err != nil {
 		log.Println("error while decrease equipment quantity, err : ", err)
 		return models.Billing{}, err
@@ -104,13 +102,11 @@ func (r Rental) RentEquipment(ctx context.Context, rental models.Rental, availab
 	bill.RentId = respRental.Id
 
 	// create bill
-	resp, err := r.CreateBill(ctx, tx, bill)
+	resp, err := r.createBill(ctx, tx, bill)
 	if err != nil {
 		log.Println("error while calling create bill, err : ", err)
 		return models.Billing{}, err
 	}
-
-	// Get bill details from transaction-id
 
 	return resp, nil
 }
@@ -124,7 +120,6 @@ func (r Rental) EquipmentQuantity(ctx context.Context, equipId int) (int, error)
 	}
 
 	var quantity int
-
 	res.Next()
 	err = res.Scan(&quantity)
 	if err != nil {
@@ -144,7 +139,6 @@ func (r Rental) EquipmentCharges(ctx context.Context, equipId int) (float64, err
 	}
 
 	var rentPerDay float64
-
 	res.Next()
 	err = res.Scan(&rentPerDay)
 	if err != nil {
@@ -155,17 +149,15 @@ func (r Rental) EquipmentCharges(ctx context.Context, equipId int) (float64, err
 	return rentPerDay, nil
 }
 
-func (r Rental) CreateBill(ctx context.Context, tx *sql.Tx, billing models.Billing) (models.Billing, error) {
+func (r Rental) createBill(ctx context.Context, tx *sql.Tx, billing models.Billing) (models.Billing, error) {
 
 	res := tx.QueryRow(createNewBill, billing.Amount, billing.RentId)
 
 	var bill models.Billing
-
 	err := res.Scan(&bill.Id,
 		&bill.Date,
 		&bill.Amount,
 		&bill.RentId)
-
 	if err != nil {
 		log.Println("error while scaning billing DB row, err : ", err)
 		return models.Billing{}, apperrors.ErrDbParsing
@@ -174,7 +166,7 @@ func (r Rental) CreateBill(ctx context.Context, tx *sql.Tx, billing models.Billi
 	return bill, nil
 }
 
-func (r Rental) UpdateQuantity(ctx context.Context, tx *sql.Tx, equipId int, quantity int) error {
+func (r Rental) updateQuantity(ctx context.Context, tx *sql.Tx, equipId int, quantity int) error {
 
 	_, err := tx.Exec(descreaseQuantity, quantity, equipId)
 	if err != nil {

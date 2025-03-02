@@ -28,14 +28,14 @@ func (rentalH *rentalHandler) RentEquipment(w http.ResponseWriter, r *http.Reque
 	// Path param conversion
 	userId, err := strconv.Atoi(r.PathValue("user_id"))
 	if err != nil {
-		log.Println("error while converting equipment id param form string into int, err : ", err)
+		log.Println("error while converting equipment id param form string to int, err : ", err)
 		http.Error(w, "error while paring path value", http.StatusInternalServerError)
 	}
 
 	// Path param conversion
 	equipId, err := strconv.Atoi(r.PathValue("equip_id"))
 	if err != nil {
-		log.Println("error while converting equipment id param form string into int, err : ", err)
+		log.Println("error while converting equipment id param form string to int, err : ", err)
 		http.Error(w, "error while path value type casting", http.StatusInternalServerError)
 	}
 

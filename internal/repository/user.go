@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log"
 	"strings"
 
@@ -15,7 +16,7 @@ const (
 					  			last_name, email, phone, address, pincode, uid)
 									VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 	userByusername = `SELECT password from users where user_name = $1`
-	userProfile    = `SELECT user_name, first_name, last_name from users where id = $1`
+	userProfile    = `SELECT id, email, pincode, uid, first_name, last_name, user_name, address, phone from users where id = $1`
 )
 
 type user struct {
@@ -25,7 +26,7 @@ type user struct {
 type UserStorer interface {
 	RegisterUser(ctx context.Context, user models.User) error
 	GetUserByUsername(ctx context.Context, userName string) (models.UserCredentials, error)
-	// UserProfile(ctx context.Context, userId int) (models.User, error)
+	UserProfile(ctx context.Context, userId int) (models.User, error)
 }
 
 func NewUserStorer(db *sql.DB) UserStorer {
@@ -46,15 +47,20 @@ func (u user) RegisterUser(ctx context.Context, user models.User) error {
 		user.Uid)
 
 	if err != nil {
-		if strings.Contains(err.Error(), "unique constraint") || strings.Contains(err.Error(), "duplicate key") {
-			if strings.Contains(err.Error(), "username") {
+		errMsg := err.Error()
+
+		if strings.Contains(errMsg, "unique constraint") || strings.Contains(errMsg, "duplicate key") {
+			switch {
+			case strings.Contains(errMsg, "username"):
 				return apperrors.ErrDuplicateUsername
-			}
-			if strings.Contains(err.Error(), "email") {
+			case strings.Contains(errMsg, "email"):
 				return apperrors.ErrDuplicateEmail
+			case strings.Contains(errMsg, "uid"):
+				return apperrors.ErrDuplicateUid
 			}
 		}
-		log.Printf("Failed to create user: %v", err)
+
+		log.Printf("Repo: Failed to create user, err : %v\n", err)
 		return apperrors.ErrDbServer
 	}
 
@@ -67,20 +73,39 @@ func (u user) GetUserByUsername(ctx context.Context, userName string) (models.Us
 
 	err := u.db.QueryRow(userByusername, userName).Scan(&user.Password)
 	if err == sql.ErrNoRows {
-		log.Println("error while scanning data, err : ", err)
+		log.Printf("error while scanning data, err : %v", err)
 		return models.UserCredentials{}, apperrors.ErrInvalidCredentials
 	}
 	if err != nil {
-		log.Println("error while scanning data, err : ", err)
+		log.Printf("error while scanning data, err : %v\n", err)
 		return models.UserCredentials{}, apperrors.ErrDbServer
 	}
 
 	return user, nil
 }
 
-// func (u user) UserProfile(ctx context.Context, userId int) (models.User, error) {
+func (u user) UserProfile(ctx context.Context, userId int) (models.User, error) {
 
-// 	var user models.UserProfile
-// 	err := u.db.QueryRow(userProfile, userId).Scan(&user.Username, &user.First_name, &user.Last_name)
+	var user models.User
+	err := u.db.QueryRow(userProfile, userId).Scan(&user.Id,
+		&user.Email,
+		&user.Pincode,
+		&user.Uid,
+		&user.First_name,
+		&user.Last_name,
+		&user.Username,
+		&user.Address,
+		&user.Phone,
+	)
 
-// }
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Printf("Repo: User with ID %d not found, err: %v\n", userId, err)
+			return models.User{}, apperrors.ErrUserNotFound
+		}
+		log.Printf("Repo: Database error while fetching user ID %d, err: %v\n", userId, err)
+		return models.User{}, apperrors.ErrDbServer
+	}
+
+	return user, nil
+}

@@ -51,6 +51,19 @@ const (
 	FROM users u
 	JOIN equipments e ON u.id = e.user_id
 	WHERE e.id = $1`
+
+	updateProfile = `UPDATE users 
+	SET user_name = $1, 
+	first_name = $2, 
+	last_name = $3, 
+	email = $4, 
+	phone = $5, 
+	address = $6, 
+	pincode = $7, 
+	uid = $8
+	WHERE id = $9
+	RETURNING id, user_name, first_name, last_name, email, phone, address, pincode, uid;
+	`
 )
 
 type user struct {
@@ -61,7 +74,8 @@ type UserStorer interface {
 	RegisterUser(ctx context.Context, user models.User) error
 	GetUserByUsername(ctx context.Context, userName string) (models.UserCredentials, error)
 	UserProfile(ctx context.Context, userId int) (models.User, error)
-	OwnerByEquipmentId(ctx context.Context, equipmentID int) (models.User, error)
+	OwnerByEquipmentId(ctx context.Context, equipmentID int) (user models.User, err error)
+	UpdateUserProfile(ctx context.Context, updateUser models.User) (models.User, error)
 }
 
 func NewUserStorer(db *sql.DB) UserStorer {
@@ -166,4 +180,42 @@ func (u user) OwnerByEquipmentId(ctx context.Context, equipmentID int) (user mod
 	}
 
 	return
+}
+
+func (u user) UpdateUserProfile(ctx context.Context, updateUser models.User) (models.User, error) {
+
+	var updatedUser models.User
+
+	err := u.db.QueryRowContext(ctx, updateProfile,
+		updateUser.Username,
+		updateUser.First_name,
+		updateUser.Last_name,
+		updateUser.Email,
+		updateUser.Phone,
+		updateUser.Address,
+		updateUser.Pincode,
+		updateUser.Uid,
+		updateUser.Id,
+	).Scan(
+		&updatedUser.Id,
+		&updatedUser.Username,
+		&updatedUser.First_name,
+		&updatedUser.Last_name,
+		&updatedUser.Email,
+		&updatedUser.Phone,
+		&updatedUser.Address,
+		&updatedUser.Pincode,
+		&updatedUser.Uid,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Printf("Repo: No user found with ID %d, err: %v\n", updateUser.Id, err)
+			return models.User{}, apperrors.ErrUserNotFound
+		}
+		log.Printf("Repo: Failed to update user ID %d, err: %v\n", updateUser.Id, err)
+		return models.User{}, apperrors.ErrDbServer
+	}
+
+	return updatedUser, nil
 }

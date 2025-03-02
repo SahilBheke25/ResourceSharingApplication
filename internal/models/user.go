@@ -30,7 +30,7 @@ type UserCredentials struct {
 	Password string `json:"password"`
 }
 
-func (u User) ValidateUser(ctx context.Context) error {
+func (u User) ValidateUser(ctx context.Context, validatePassword bool) error {
 
 	var validationErrors []string
 
@@ -58,8 +58,11 @@ func (u User) ValidateUser(ctx context.Context) error {
 	if u.Email == "" || !emailRegex.MatchString(u.Email) {
 		validationErrors = append(validationErrors, "invalid email format")
 	}
-	if len(u.Password) < 8 {
+	if validatePassword && len(u.Password) < 8 {
 		validationErrors = append(validationErrors, "password must be at least 8 characters")
+	}
+	if !(u.Pincode >= 100000 && u.Pincode <= 999999) {
+		validationErrors = append(validationErrors, "pincode must be exactly 6 digits")
 	}
 
 	// Return all errors

@@ -22,6 +22,7 @@ type Handler interface {
 	Register(w http.ResponseWriter, r *http.Request)
 	UserById(w http.ResponseWriter, r *http.Request)
 	EquipmentOwner(w http.ResponseWriter, r *http.Request)
+	UpdateProfile(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(service Service) Handler {
@@ -73,7 +74,7 @@ func (u *userHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validating user data
-	err = user.ValidateUser(ctx)
+	err = user.ValidateUser(ctx, true)
 	if err != nil {
 		log.Printf("Handler: User validation failed: %v\n", err)
 		utils.ErrorResponse(ctx, w, http.StatusBadRequest, err)
@@ -126,7 +127,7 @@ func (u *userHandler) UserById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.SuccessResponse(ctx, w, http.StatusFound, user)
+	utils.SuccessResponse(ctx, w, http.StatusOK, user)
 }
 
 func (u *userHandler) EquipmentOwner(w http.ResponseWriter, r *http.Request) {
@@ -154,4 +155,56 @@ func (u *userHandler) EquipmentOwner(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.SuccessResponse(ctx, w, http.StatusOK, owner)
+}
+
+func (u *userHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+
+	// Extract user ID from path params
+	userID, err := strconv.Atoi(r.PathValue("user_id"))
+	if err != nil {
+		log.Printf("Handler: Invalid user_id param, err: %v\n", err)
+		utils.ErrorResponse(ctx, w, http.StatusBadRequest, apperrors.ErrPathParam)
+		return
+	}
+
+	// Decode request body
+	var updatedUser models.User
+	err = json.NewDecoder(r.Body).Decode(&updatedUser)
+	if err != nil {
+		log.Printf("Handler: Failed to decode request body, err: %v\n", err)
+		utils.ErrorResponse(ctx, w, http.StatusBadRequest, apperrors.ErrInvalidReqBody)
+		return
+	}
+	defer r.Body.Close()
+
+	// user ID in request body matches path param
+	if updatedUser.Id != userID {
+		log.Println("Handler: Mismatch between path user_id and request body user_id")
+		utils.ErrorResponse(ctx, w, http.StatusBadRequest, apperrors.ErrInvalidUserID)
+		return
+	}
+
+	// Updated user validation
+	if err = updatedUser.ValidateUser(ctx, false); err != nil {
+		log.Printf("Handler: User validation failed: %v\n", err)
+		utils.ErrorResponse(ctx, w, http.StatusBadRequest, err)
+		return
+	}
+
+	// Calling service layer to update user
+	updatedUser, err = u.userService.UpdateUserProfile(ctx, updatedUser)
+	if err != nil {
+		if errors.Is(err, apperrors.ErrUserNotFound) {
+			log.Printf("Handler: User with ID %d not found\n", userID)
+			utils.ErrorResponse(ctx, w, http.StatusNotFound, err)
+			return
+		}
+		log.Printf("Handler: Failed to update user ID %d, err: %v\n", userID, err)
+		utils.ErrorResponse(ctx, w, http.StatusInternalServerError, err)
+		return
+	}
+
+	// Success response
+	utils.SuccessResponse(ctx, w, http.StatusOK, "User profile updated successfully")
 }

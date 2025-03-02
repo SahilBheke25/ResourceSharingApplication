@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
@@ -16,6 +17,8 @@ type service struct {
 type Service interface {
 	Authenticate(ctx context.Context, username, password string) (bool, error)
 	RegisterUser(ctx context.Context, user models.User) error
+	UserProfile(ctx context.Context, userId int) (models.User, error)
+	OwnerByEquipmentId(ctx context.Context, equipId int) (user models.User, err error)
 }
 
 func NewService(user repository.UserStorer) Service {
@@ -27,7 +30,7 @@ func (s service) Authenticate(ctx context.Context, username, password string) (b
 	// DB call
 	resp, err := s.userRepo.GetUserByUsername(ctx, username)
 	if err != nil {
-		log.Println("error occured while calling getUserByUsername DB opeartion, err : ", err)
+		log.Printf("Service: error occured while calling getUserByUsername DB opeartion, err : %v\n", err)
 		return false, err
 	}
 
@@ -44,9 +47,38 @@ func (s service) RegisterUser(ctx context.Context, user models.User) error {
 	//DB call
 	err := s.userRepo.RegisterUser(ctx, user)
 	if err != nil {
-		log.Println("error occured while calling CreateUser DB opeartion, err : ", err)
+		log.Printf("Service: error occured while calling CreateUser DB opeartion, err : %v\n", err)
 		return err
 	}
 
 	return nil
+}
+
+func (s service) UserProfile(ctx context.Context, userId int) (user models.User, err error) {
+
+	// DB call
+	user, err = s.userRepo.UserProfile(ctx, userId)
+	if err != nil {
+		if errors.Is(err, apperrors.ErrUserNotFound) {
+			return
+		}
+
+		log.Printf("Service: Failed to fetch user with ID %d, err: %v\n", userId, err)
+		err = apperrors.ErrInternal
+		return
+	}
+
+	return
+}
+
+func (s service) OwnerByEquipmentId(ctx context.Context, equipmentID int) (user models.User, err error) {
+
+	// DB call
+	user, err = s.userRepo.OwnerByEquipmentId(ctx, equipmentID)
+	if err != nil {
+		log.Printf("Service: Error fetching owner for EquipmentID %d, err: %v\n", equipmentID, err)
+		return
+	}
+
+	return
 }

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/utils"
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
@@ -19,6 +20,8 @@ type userHandler struct {
 type Handler interface {
 	Login(w http.ResponseWriter, r *http.Request)
 	Register(w http.ResponseWriter, r *http.Request)
+	UserById(w http.ResponseWriter, r *http.Request)
+	EquipmentOwner(w http.ResponseWriter, r *http.Request)
 }
 
 func NewHandler(service Service) Handler {
@@ -58,62 +61,97 @@ func (u *userHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
+	ctx := context.Background()
+
 	// Reading json request
 	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		utils.ErrorResponse(context.Background(), w, http.StatusBadRequest, apperrors.ErrInvalidReqBody)
+		log.Println("Handler: Error decoding request body:", err)
+		utils.ErrorResponse(ctx, w, http.StatusBadRequest, apperrors.ErrInvalidReqBody)
 		return
 	}
 
 	// Validating user data
-	_, err = user.ValidateUser(context.Background(), user)
+	err = user.ValidateUser(ctx)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotAcceptable)
+		log.Printf("Handler: User validation failed: %v\n", err)
+		utils.ErrorResponse(ctx, w, http.StatusBadRequest, err)
 		return
 	}
 
 	// Create user & checks if user already exist.
-	err = u.userService.RegisterUser(context.Background(), user)
+	err = u.userService.RegisterUser(ctx, user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Printf("Handler: Error calling RegisterUser service: err : %v\n", err)
+		switch {
+		case errors.Is(err, apperrors.ErrDuplicateUsername):
+			utils.ErrorResponse(ctx, w, http.StatusConflict, apperrors.ErrDuplicateUsername)
+			return
+		case errors.Is(err, apperrors.ErrDuplicateEmail):
+			utils.ErrorResponse(ctx, w, http.StatusConflict, apperrors.ErrDuplicateEmail)
+			return
+		case errors.Is(err, apperrors.ErrDuplicateUid):
+			utils.ErrorResponse(ctx, w, http.StatusConflict, apperrors.ErrDuplicateUid)
+			return
+		default:
+			utils.ErrorResponse(ctx, w, http.StatusInternalServerError, apperrors.ErrDbServer)
+			return
+		}
+	}
+
+	utils.SuccessResponse(ctx, w, http.StatusOK, "User Registered Successfully ")
+}
+
+func (u *userHandler) UserById(w http.ResponseWriter, r *http.Request) {
+
+	ctx := context.Background()
+
+	// Path param conversion
+	userId, err := strconv.Atoi(r.PathValue("user_id"))
+	if err != nil {
+		log.Printf("Handler: error while converting user id param form string to int, err : %v\n", err)
+		utils.ErrorResponse(ctx, w, http.StatusBadRequest, apperrors.ErrPathParam)
 		return
 	}
 
-	utils.HandleResponse(w, "User Registered Successfully ", r)
+	user, err := u.userService.UserProfile(ctx, userId)
+	if err != nil {
+		if errors.Is(err, apperrors.ErrUserNotFound) {
+			utils.ErrorResponse(ctx, w, http.StatusNotFound, apperrors.ErrUserNotFound)
+			return
+		}
+		log.Printf("Handler: Unexpected error while calling UserProfile service for user ID %d, err: %v\n", userId, err)
+		utils.ErrorResponse(ctx, w, http.StatusInternalServerError, apperrors.ErrInternal)
+		return
+	}
+
+	utils.SuccessResponse(ctx, w, http.StatusFound, user)
 }
 
-// ------------------------------------------------------------------
+func (u *userHandler) EquipmentOwner(w http.ResponseWriter, r *http.Request) {
 
-// type user struct {
-// 	username string `json: username`
-// }
+	ctx := context.Background()
 
-// func GetUserByIdHandler(w http.ResponseWriter, r *http.Request) {
+	// Path param conversion
+	equipmentID, err := strconv.Atoi(r.PathValue("equipment_id"))
+	if err != nil {
+		log.Printf("Handler: error while converting user id param form string to int, err : %v\n", err)
+		utils.ErrorResponse(ctx, w, http.StatusBadRequest, apperrors.ErrPathParam)
+		return
+	}
 
-// 	body, err := io.ReadAll(r.Body)
-// 	if err != nil {
-// 		err = fmt.Errorf("Error while Reading request: %v", err)
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
+	owner, err := u.userService.OwnerByEquipmentId(ctx, equipmentID)
+	if err != nil {
+		log.Printf("Handler: error while fetching owner for EquipmentID %d, err: %v\n", equipmentID, err)
 
-// 	var user user
-// 	err = json.Unmarshal(body, &user)
+		if errors.Is(err, apperrors.ErrUserNotFound) {
+			utils.ErrorResponse(ctx, w, http.StatusNotFound, err)
+			return
+		}
+		utils.ErrorResponse(ctx, w, http.StatusInternalServerError, err)
+		return
+	}
 
-// 	if err != nil {
-// 		err = fmt.Errorf("Error while Unmarshelling: %v", err)
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	// err = Repository.GetUserByUsername(user.username)
-
-// 	if err != nil {
-// 		err = fmt.Errorf("Error while Fetching user by username: %v", err)
-// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	utils.HandleResponse(w, "Success", r)
-// }
+	utils.SuccessResponse(ctx, w, http.StatusOK, owner)
+}

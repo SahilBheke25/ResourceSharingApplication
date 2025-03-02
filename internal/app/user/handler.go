@@ -131,13 +131,27 @@ func (u *userHandler) UserById(w http.ResponseWriter, r *http.Request) {
 
 func (u *userHandler) EquipmentOwner(w http.ResponseWriter, r *http.Request) {
 
-	// ctx := context.Background()
+	ctx := context.Background()
 
 	// Path param conversion
-	// equipId, err := strconv.Atoi(r.PathValue("equip_id"))
-	// if err != nil {
-	// 	log.Printf("Handler: error while converting user id param form string to int, err : %v\n", err)
-	// 	utils.ErrorResponse(ctx, w, http.StatusBadRequest, apperrors.ErrPathParam)
-	// 	return
-	// }
+	equipmentID, err := strconv.Atoi(r.PathValue("equipment_id"))
+	if err != nil {
+		log.Printf("Handler: error while converting user id param form string to int, err : %v\n", err)
+		utils.ErrorResponse(ctx, w, http.StatusBadRequest, apperrors.ErrPathParam)
+		return
+	}
+
+	owner, err := u.userService.OwnerByEquipmentId(ctx, equipmentID)
+	if err != nil {
+		log.Printf("Handler: error while fetching owner for EquipmentID %d, err: %v\n", equipmentID, err)
+
+		if errors.Is(err, apperrors.ErrUserNotFound) {
+			utils.ErrorResponse(ctx, w, http.StatusNotFound, err)
+			return
+		}
+		utils.ErrorResponse(ctx, w, http.StatusInternalServerError, err)
+		return
+	}
+
+	utils.SuccessResponse(ctx, w, http.StatusOK, owner)
 }

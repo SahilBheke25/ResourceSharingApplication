@@ -17,7 +17,7 @@ type User struct {
 	Phone      string `json:"phone"`
 	Address    string `json:"address"`
 	Pincode    int    `json:"pincode"`
-	Uid        int    `json:"uid"`
+	Uid        int    `json:"uid,omitempty"`
 }
 
 // type UserProfile struct {

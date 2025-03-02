@@ -19,6 +19,7 @@ type Service interface {
 	RegisterUser(ctx context.Context, user models.User) error
 	UserProfile(ctx context.Context, userId int) (models.User, error)
 	OwnerByEquipmentId(ctx context.Context, equipId int) (user models.User, err error)
+	UpdateUserProfile(ctx context.Context, updateUser models.User) (models.User, error)
 }
 
 func NewService(user repository.UserStorer) Service {
@@ -81,4 +82,21 @@ func (s service) OwnerByEquipmentId(ctx context.Context, equipmentID int) (user 
 	}
 
 	return
+}
+
+func (s service) UpdateUserProfile(ctx context.Context, updateUser models.User) (models.User, error) {
+	// Validate if user ID is provided
+	if updateUser.Id <= 0 {
+		log.Println("Service: Invalid user ID")
+		return models.User{}, apperrors.ErrInvalidUserID
+	}
+
+	// Call the repository layer to update the user profile
+	updatedUser, err := s.userRepo.UpdateUserProfile(ctx, updateUser)
+	if err != nil {
+		log.Printf("Service: Error updating user profile, err: %v\n", err)
+		return models.User{}, err
+	}
+
+	return updatedUser, nil
 }

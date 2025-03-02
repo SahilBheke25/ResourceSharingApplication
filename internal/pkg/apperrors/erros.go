@@ -12,6 +12,7 @@ var (
 	ErrInvalidData        = errors.New("invalid user data provided")
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrUserNotFound       = errors.New("user with given ID not found")
+	ErrInvalidUserID      = errors.New("invalid user ID: must be a positive integer")
 
 	ErrDurationTooShort     = errors.New("duration too short")
 	ErrQuantityNotAvailable = errors.New("requested quantity not available")

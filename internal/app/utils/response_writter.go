@@ -57,7 +57,6 @@ func ErrorResponse(ctx context.Context, w http.ResponseWriter, httpStatus int, e
 		ErrorCode:    httpStatus,
 		ErrorMessage: err.Error(),
 	}
-
 	out, err := json.Marshal(payload)
 	if err != nil {
 		log.Println(ctx, "error occured while marshaling response payload, err : ", err)
@@ -66,6 +65,7 @@ func ErrorResponse(ctx context.Context, w http.ResponseWriter, httpStatus int, e
 	}
 
 	_, err = w.Write(out)
+
 	if err != nil {
 		log.Println(ctx, "error occured while writing response, err : ", err)
 		writeServerErrorResponse(ctx, w)

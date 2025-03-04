@@ -51,6 +51,12 @@ func (e *equipmentHandler) CreateEquipmentHandler(w http.ResponseWriter, r *http
 
 func (e *equipmentHandler) ListEquipmentHandler(w http.ResponseWriter, r *http.Request) {
 
+	// Auth header validation
+	// err := middleware.VerifyIncomingRequest(w, r)
+	// if err != nil {
+	// 	return
+	// }
+
 	equipments, err := e.eqipmentService.GetAllEquipment(context.Background())
 
 	if err != nil {

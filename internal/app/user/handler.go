@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/utils"
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
@@ -57,6 +56,7 @@ func (u *userHandler) Login(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// set jwt
 	auth := middleware.NewAuthService()
 	token, err := auth.CreateToken(user.Id)
 	if err != nil {
@@ -127,20 +127,23 @@ func (u *userHandler) UserById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// auth check
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		http.Error(w, "Authorization header missing", http.StatusUnauthorized)
-		return
-	}
+	// token verification
+	// err = middleware.VerifyIncomingRequest(w, r)
+	// if err != nil {
+	// 	return
+	// }
+	// authHeader := r.Header.Get("Authorization")
+	// if authHeader == "" {
+	// 	http.Error(w, "Authorization header missing", http.StatusUnauthorized)
+	// 	return
+	// }
 
-	auth := middleware.NewAuthService()
-	tokenID, err := auth.VerifyToken(strings.TrimPrefix(authHeader, "Bearer "))
-	if err != nil {
-		log.Println("Hander: err in auth check, err : ", err)
-	}
-	log.Println("tokenID: ", tokenID, " ", "userParam: ", userId)
-	// auth check END
+	// auth := middleware.NewAuthService()
+	// tokenID, err := auth.VerifyToken(strings.TrimPrefix(authHeader, "Bearer "))
+	// if err != nil {
+	// 	log.Println("Hander: err in auth check, err : ", err)
+	// }
+	// log.Println("tokenID: ", tokenID, " ", "userParam: ", userId)
 
 	user, err := u.userService.UserProfile(ctx, userId)
 	if err != nil {

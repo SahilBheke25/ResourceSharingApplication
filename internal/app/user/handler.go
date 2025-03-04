@@ -7,10 +7,12 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/utils"
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/pkg/apperrors"
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/pkg/middleware"
 )
 
 type userHandler struct {
@@ -37,15 +39,15 @@ func (u *userHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
-		log.Println("error while decoding request body, err : ", err)
+		log.Printf("Handler: error while decoding request body, err : %v\n", err)
 		utils.ErrorResponse(context.Background(), w, http.StatusBadRequest, apperrors.ErrInvalidReqBody)
 		return
 	}
 
 	// Authenticating User
-	_, err = u.userService.Authenticate(context.Background(), user.Username, user.Password)
+	user, err = u.userService.Authenticate(context.Background(), user.Username, user.Password)
 	if err != nil {
-		log.Println("error while authenticating user credentials, err : ", err)
+		log.Printf("handler: error while authenticating user credentials, err : %v\n", err)
 		if errors.Is(err, apperrors.ErrInvalidCredentials) {
 			utils.ErrorResponse(context.Background(), w, http.StatusUnauthorized, err)
 			return
@@ -55,7 +57,16 @@ func (u *userHandler) Login(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	utils.SuccessResponse(context.Background(), w, http.StatusOK, "User Verifed Successfully")
+	auth := middleware.NewAuthService()
+	token, err := auth.CreateToken(user.Id)
+	if err != nil {
+		log.Printf("Handler: error while creating token, err : %v\n", err)
+		utils.ErrorResponse(context.Background(), w, http.StatusInternalServerError, err)
+		return
+	}
+
+	w.Header().Set("Authorization", "Bearer "+token)
+	utils.SuccessResponse(context.Background(), w, http.StatusOK, user)
 }
 
 func (u *userHandler) Register(w http.ResponseWriter, r *http.Request) {
@@ -115,6 +126,21 @@ func (u *userHandler) UserById(w http.ResponseWriter, r *http.Request) {
 		utils.ErrorResponse(ctx, w, http.StatusBadRequest, apperrors.ErrPathParam)
 		return
 	}
+
+	// auth check
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "Authorization header missing", http.StatusUnauthorized)
+		return
+	}
+
+	auth := middleware.NewAuthService()
+	tokenID, err := auth.VerifyToken(strings.TrimPrefix(authHeader, "Bearer "))
+	if err != nil {
+		log.Println("Hander: err in auth check, err : ", err)
+	}
+	log.Println("tokenID: ", tokenID, " ", "userParam: ", userId)
+	// auth check END
 
 	user, err := u.userService.UserProfile(ctx, userId)
 	if err != nil {

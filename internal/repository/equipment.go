@@ -17,7 +17,7 @@ const (
 											RETURNING id, equipment_name, description, rent_per_day, quantity, 
 											equipment_img, status, uploaded_at`
 
-	getEquipments = `SELECT equipment_name, description, rent_per_day, quantity, 
+	getEquipments = `SELECT id, equipment_name, description, rent_per_day, quantity, 
 						  			equipment_img, status, uploaded_at from equipments`
 
 	equipmentsByUserId = `SELECT id, equipment_name, description, rent_per_day, 
@@ -108,7 +108,9 @@ func (e equipment) GetAllEquipment(ctx context.Context) ([]models.Equipment, err
 
 	for list.Next() {
 
-		err := list.Scan(&equipment.Name,
+		err := list.Scan(
+			&equipment.ID,
+			&equipment.Name,
 			&equipment.Description,
 			&equipment.RentPerDay,
 			&equipment.Quantity,

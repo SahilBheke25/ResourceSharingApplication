@@ -25,9 +25,17 @@ const (
 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
 	userByusername = `SELECT 
-	password 
-	FROM users 
-	where user_name = $1`
+	id, 
+	email, 
+	pincode, 
+	uid, 
+	first_name, 
+	last_name, 
+	user_name, 
+	address,
+	phone,
+	password
+	FROM users where user_name = $1`
 	userProfile = `SELECT 
 	id, 
 	email, 
@@ -72,7 +80,7 @@ type user struct {
 
 type UserStorer interface {
 	RegisterUser(ctx context.Context, user models.User) error
-	GetUserByUsername(ctx context.Context, userName string) (models.UserCredentials, error)
+	GetUserByUsername(ctx context.Context, userName string) (models.User, error)
 	UserProfile(ctx context.Context, userId int) (models.User, error)
 	OwnerByEquipmentId(ctx context.Context, equipmentID int) (user models.User, err error)
 	UpdateUserProfile(ctx context.Context, updateUser models.User) (models.User, error)
@@ -115,17 +123,28 @@ func (u user) RegisterUser(ctx context.Context, user models.User) error {
 	return nil
 }
 
-func (u user) GetUserByUsername(ctx context.Context, userName string) (models.UserCredentials, error) {
+func (u user) GetUserByUsername(ctx context.Context, userName string) (models.User, error) {
 
-	var user models.UserCredentials
-	err := u.db.QueryRow(userByusername, userName).Scan(&user.Password)
-	if err == sql.ErrNoRows {
-		log.Printf("error while scanning data, err : %v", err)
-		return models.UserCredentials{}, apperrors.ErrInvalidCredentials
-	}
+	var user models.User
+	err := u.db.QueryRow(userByusername, userName).Scan(&user.Id,
+		&user.Email,
+		&user.Pincode,
+		&user.Uid,
+		&user.First_name,
+		&user.Last_name,
+		&user.Username,
+		&user.Address,
+		&user.Phone,
+		&user.Password,
+	)
+
 	if err != nil {
+		if err == sql.ErrNoRows {
+			log.Printf("error while scanning data, err : %v", err)
+			return models.User{}, apperrors.ErrInvalidCredentials
+		}
 		log.Printf("error while scanning data, err : %v\n", err)
-		return models.UserCredentials{}, apperrors.ErrDbServer
+		return models.User{}, apperrors.ErrDbServer
 	}
 
 	return user, nil

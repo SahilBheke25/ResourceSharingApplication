@@ -15,7 +15,7 @@ type service struct {
 }
 
 type Service interface {
-	Authenticate(ctx context.Context, username, password string) (bool, error)
+	Authenticate(ctx context.Context, username, password string) (models.User, error)
 	RegisterUser(ctx context.Context, user models.User) error
 	UserProfile(ctx context.Context, userId int) (models.User, error)
 	OwnerByEquipmentId(ctx context.Context, equipId int) (user models.User, err error)
@@ -26,21 +26,22 @@ func NewService(user repository.UserStorer) Service {
 	return service{userRepo: user}
 }
 
-func (s service) Authenticate(ctx context.Context, username, password string) (bool, error) {
+func (s service) Authenticate(ctx context.Context, username, password string) (models.User, error) {
 
 	// DB call
 	resp, err := s.userRepo.GetUserByUsername(ctx, username)
 	if err != nil {
 		log.Printf("Service: error occured while calling getUserByUsername DB opeartion, err : %v\n", err)
-		return false, err
+		return models.User{}, err
 	}
 
 	// Password Verification
 	if resp.Password != password {
-		return false, apperrors.ErrInvalidCredentials
+		log.Println(resp.Password, " ", password)
+		return models.User{}, apperrors.ErrInvalidCredentials
 	}
 
-	return true, nil
+	return resp, nil
 }
 
 func (s service) RegisterUser(ctx context.Context, user models.User) error {

@@ -25,14 +25,18 @@ var (
 	ErrQuantityNotAvailable = errors.New("requested quantity not available")
 	ErrFailedToCreate       = errors.New("failed to create equipment")
 	ErrInvalidQuantity      = errors.New("invalid quantity: must be greater than zero")
+	ErrEquipmentNotFound    = errors.New("equipment not found")
+	ErrNotAnOwner           = errors.New("not an owner of the equipment, operation not allowed")
 
 	// DB errors
 	ErrDbFetching = errors.New("error while fetching DB data")
 	ErrDbParsing  = errors.New("error while parsing db data")
 	ErrDbExce     = errors.New("error while inserting data into DB")
 	ErrDbScan     = errors.New("error while scannig data from db to model")
+	ErrNoData     = errors.New("no data found")
+	ErrDbDelete   = errors.New("error while deleting data from DB")
 
 	ErrInvalidReqBody = errors.New("invalid request body")
 	ErrPathParam      = errors.New("invalid path ID, must be a number")
-	ErrAtoi           = errors.New("error while converting equipment id param form string into int")
+	ErrAtoi           = errors.New("error while converting id param form string into int")
 )

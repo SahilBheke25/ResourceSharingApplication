@@ -17,8 +17,8 @@ type Service interface {
 	CreateEquipment(ctx context.Context, equipment models.Equipment) (models.Equipment, error)
 	GetAllEquipment(ctx context.Context) ([]models.Equipment, error)
 	GetEquipmentsByUserId(ctx context.Context, userId int) ([]models.Equipment, error)
-	DeleteEquipmentById(ctx context.Context, equipmentId int) error
-	UpdateEquipment(ctx context.Context, equipmentId int, equipment models.Equipment) (models.Equipment, error)
+	DeleteEquipmentById(ctx context.Context, equipmentId int, userId int) error
+	UpdateEquipment(ctx context.Context, equipmentId int, userId int, equipment models.Equipment) (models.Equipment, error)
 	EquipmentById(ctx context.Context, equipId int) (models.Equipment, error)
 }
 
@@ -47,43 +47,67 @@ func (s service) GetAllEquipment(ctx context.Context) ([]models.Equipment, error
 	resp, err := s.equipmentRepo.GetAllEquipment(ctx)
 
 	if err != nil {
-		log.Println("error occured while calling CreateEquipemnt DB opeartion, err : ", err)
+		log.Printf("Service: error occured while calling CreateEquipemnt DB opeartion, err : %v", err)
 		return []models.Equipment{}, err
 	}
 
 	return resp, nil
-
 }
 
 func (s service) GetEquipmentsByUserId(ctx context.Context, userId int) ([]models.Equipment, error) {
-	resp, err := s.equipmentRepo.GetEquipmentsByUserId(ctx, userId)
 
+	if userId <= 0 {
+		log.Printf("Service: error invalid userId:%v provided, err : %v", userId, apperrors.ErrInvalidUserID)
+		return nil, apperrors.ErrInvalidUserID
+	}
+
+	resp, err := s.equipmentRepo.EquipmentsOfUser(ctx, userId)
 	if err != nil {
-		log.Println("error occured while calling get Equipment by user ID DB opeartion, err : ", err)
-		return []models.Equipment{}, err
+		log.Printf("Service: error occured while calling get Equipment by user ID DB opeartion, err : %v", err)
+		return nil, err
 	}
 
 	return resp, nil
 }
 
-func (s service) DeleteEquipmentById(ctx context.Context, equipmentId int) error {
+func (s service) DeleteEquipmentById(ctx context.Context, equipmentId int, userId int) error {
 
-	err := s.equipmentRepo.DeleteEquipmentById(ctx, equipmentId)
-
+	equipment, err := s.equipmentRepo.EquipmentById(ctx, equipmentId)
 	if err != nil {
-		log.Println("eerror while calling DeleteEquipmentById DB operation, err : ", err)
+		log.Printf("Service: error while calling EquipmentById DB operation, err : %v", err)
+		return apperrors.ErrEquipmentNotFound
+	}
+
+	if equipment.UserId != userId {
+		log.Printf("Service: error user with userId:%v is not an owner of the equipment:%v", userId, equipmentId)
+		return apperrors.ErrNotAnOwner
+	}
+
+	err = s.equipmentRepo.DeleteEquipmentById(ctx, equipmentId)
+	if err != nil {
+		log.Printf("Service: error while calling DeleteEquipmentById DB operation, err : %v", err)
 		return err
 	}
 
 	return nil
 }
 
-func (s service) UpdateEquipment(ctx context.Context, equipmentId int, equipment models.Equipment) (models.Equipment, error) {
+func (s service) UpdateEquipment(ctx context.Context, equipmentId int, userId int, equipment models.Equipment) (models.Equipment, error) {
 
-	resp, err := s.equipmentRepo.UpdateEquipment(ctx, equipmentId, equipment)
-
+	currEquipment, err := s.equipmentRepo.EquipmentById(ctx, equipmentId)
 	if err != nil {
-		log.Println("error occured while calling Update Equipment DB opeartion, err : ", err)
+		log.Printf("Service: error while calling EquipmentById DB operation, err : %v", err)
+		return models.Equipment{}, apperrors.ErrEquipmentNotFound
+	}
+
+	if currEquipment.UserId != userId {
+		log.Printf("Service: error user with userId:%v is not an owner of the equipment:%v", userId, equipmentId)
+		return models.Equipment{}, apperrors.ErrNotAnOwner
+	}
+
+	resp, err := s.equipmentRepo.UpdateEquipment(ctx, equipmentId, userId, equipment)
+	if err != nil {
+		log.Printf("Service: error occurred while updating Equipment ID %d, err: %v", equipmentId, err)
 		return models.Equipment{}, err
 	}
 
@@ -94,7 +118,7 @@ func (s service) EquipmentById(ctx context.Context, equipId int) (models.Equipme
 
 	resp, err := s.equipmentRepo.EquipmentById(ctx, equipId)
 	if err != nil {
-		log.Panicln("error occured during calling EquipmentById DB operation, err : ", err)
+		log.Printf("Service: error occured during calling EquipmentById DB operation, err : %v", err)
 		return models.Equipment{}, err
 	}
 

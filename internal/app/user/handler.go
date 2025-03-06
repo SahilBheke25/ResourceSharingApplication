@@ -138,13 +138,6 @@ func (u *userHandler) UserById(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
-	// auth := middleware.NewAuthService()
-	// tokenID, err := auth.VerifyToken(strings.TrimPrefix(authHeader, "Bearer "))
-	// if err != nil {
-	// 	log.Println("Hander: err in auth check, err : ", err)
-	// }
-	// log.Println("tokenID: ", tokenID, " ", "userParam: ", userId)
-
 	user, err := u.userService.UserProfile(ctx, userId)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrUserNotFound) {

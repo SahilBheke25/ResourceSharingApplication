@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/config"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -45,10 +46,11 @@ func (auth auth) VerifyToken(tokenString string) (int, error) {
 	return int(userIDFloat), nil
 }
 
-var secretKey = []byte("secret-key")
+// var secretKey = []byte("secret-key")
+var secretKey = []byte(config.GetEnv("JWT_SECRET"))
 
 func (auth auth) CreateToken(userID int) (string, error) {
-	//secret := config.GetEnv("JWT_SECRET")
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"userId": userID,

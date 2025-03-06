@@ -32,13 +32,15 @@ func NewHandler(service Service) Handler {
 
 func (e *equipmentHandler) CreateEquipmentHandler(w http.ResponseWriter, r *http.Request) {
 
+	// ctx := context.Background()
+
 	var equipment models.Equipment
 
 	err := json.NewDecoder(r.Body).Decode(&equipment)
 
-	if err != nil {
-		http.Error(w, "Error while Decoding Request Body", http.StatusBadRequest)
-	}
+	// if err != nil {
+	// 	utils.ErrorResponse(ctx, w, http.StatusBadRequest, )(w, "Error while Decoding Request Body", )
+	// }
 
 	resp, err := e.eqipmentService.CreateEquipment(context.Background(), equipment)
 	if err != nil {
@@ -82,11 +84,6 @@ func (e *equipmentHandler) GetEquipmentsByUserIdHandler(w http.ResponseWriter, r
 	if err != nil {
 		log.Printf("error while fetching data from the backend: %v", err)
 		http.Error(w, "Error processing request", http.StatusInternalServerError)
-		return
-	}
-
-	if len(equipments) == 0 {
-		utils.HandleResponse(w, "Data Not Found", r)
 		return
 	}
 

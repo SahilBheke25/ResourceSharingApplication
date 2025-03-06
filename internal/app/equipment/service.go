@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/pkg/apperrors"
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/repository"
 )
 
@@ -27,9 +28,15 @@ func NewService(eqp repository.EquipmentStorer) Service {
 }
 
 func (s service) CreateEquipment(ctx context.Context, equipment models.Equipment) (models.Equipment, error) {
+
+	if equipment.Quantity <= 0 {
+		log.Println("error: equipment quantity must be greater than zero")
+		return models.Equipment{}, apperrors.ErrInvalidQuantity
+	}
+
 	resp, err := s.equipmentRepo.CreateEquipment(ctx, equipment)
 	if err != nil {
-		log.Println("error occured while calling CreateEquipemnt DB opeartion, err : ", err)
+		log.Printf("error occured while calling CreateEquipemnt DB opeartion, err : %v", err)
 		return models.Equipment{}, err
 	}
 

@@ -26,6 +26,8 @@ type response struct {
 }
 
 func SuccessResponse(ctx context.Context, w http.ResponseWriter, status int, data any) {
+
+	w.Header().Set("Access-Control-Expose-Headers", "Authorization")
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 

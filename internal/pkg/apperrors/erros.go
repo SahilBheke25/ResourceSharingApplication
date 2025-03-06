@@ -10,6 +10,7 @@ var (
 	ErrHeaderMissing = errors.New("authorization header missing")
 	ErrInvalidToken  = errors.New("invalid or expired token")
 	ErrIdMissmatch   = errors.New("user ID mismatch")
+
 	// User errors
 	ErrDuplicateUsername  = errors.New("username already exists")
 	ErrDuplicateEmail     = errors.New("email already exists")
@@ -19,8 +20,11 @@ var (
 	ErrUserNotFound       = errors.New("user with given ID not found")
 	ErrInvalidUserID      = errors.New("invalid user ID: must be a positive integer")
 
+	// Equipment errors
 	ErrDurationTooShort     = errors.New("duration too short")
 	ErrQuantityNotAvailable = errors.New("requested quantity not available")
+	ErrFailedToCreate       = errors.New("failed to create equipment")
+	ErrInvalidQuantity      = errors.New("invalid quantity: must be greater than zero")
 
 	// DB errors
 	ErrDbFetching = errors.New("error while fetching DB data")

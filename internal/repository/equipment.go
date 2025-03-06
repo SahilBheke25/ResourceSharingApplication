@@ -65,6 +65,8 @@ func NewEquipmentStore(db *sql.DB) EquipmentStorer {
 
 func (e equipment) CreateEquipment(ctx context.Context, eqp models.Equipment) (models.Equipment, error) {
 
+	var resp models.Equipment
+
 	res := e.db.QueryRowContext(ctx, createEquipment,
 		eqp.Name,
 		eqp.Description,
@@ -73,15 +75,8 @@ func (e equipment) CreateEquipment(ctx context.Context, eqp models.Equipment) (m
 		eqp.EquipmentImg,
 		eqp.UserId,
 	)
-	err := res.Err()
-	if err != nil {
-		log.Println("error occured while making db reqeust for create quipment, err : ", err)
-		return models.Equipment{}, err
-	}
 
-	var resp models.Equipment
-
-	res.Scan(
+	err := res.Scan(
 		&resp.ID,
 		&resp.Name,
 		&resp.Description,
@@ -90,6 +85,15 @@ func (e equipment) CreateEquipment(ctx context.Context, eqp models.Equipment) (m
 		&resp.EquipmentImg,
 		&resp.Status,
 		&resp.UploadedAt)
+
+	if err != nil {
+		// if errors.Is(err, sql.ErrNoRows) {
+		// 	log.Printf("No equipment record created, err : %v", err)
+		// 	return models.Equipment{}, fmt.Errorf("no equipment record was created: %w", err)
+		// }
+		log.Printf("Database error while creating equipment, err : %v", err)
+		return models.Equipment{}, apperrors.ErrFailedToCreate
+	}
 
 	return resp, nil
 }

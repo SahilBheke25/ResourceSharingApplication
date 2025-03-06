@@ -227,13 +227,36 @@ func (u user) UpdateUserProfile(ctx context.Context, updateUser models.User) (mo
 		&updatedUser.Uid,
 	)
 
+	// if err != nil {
+	// 	if errors.Is(err, sql.ErrNoRows) {
+	// 		log.Printf("Repo: No user found with ID %d, err: %v\n", updateUser.Id, err)
+	// 		return models.User{}, apperrors.ErrUserNotFound
+	// 	}
+	// 	log.Printf("Repo: Failed to update user ID %d, err: %v\n", updateUser.Id, err)
+	// 	return models.User{}, apperrors.ErrDbServer
+	// }
+
 	if err != nil {
+
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("Repo: No user found with ID %d, err: %v\n", updateUser.Id, err)
 			return models.User{}, apperrors.ErrUserNotFound
 		}
+
+		errMsg := err.Error()
+		if strings.Contains(errMsg, "unique constraint") || strings.Contains(errMsg, "duplicate key") {
+			switch {
+			case strings.Contains(errMsg, "username"):
+				return updateUser, apperrors.ErrDuplicateUsername
+			case strings.Contains(errMsg, "email"):
+				return updateUser, apperrors.ErrDuplicateEmail
+			case strings.Contains(errMsg, "uid"):
+				return updateUser, apperrors.ErrDuplicateUid
+			}
+		}
+
 		log.Printf("Repo: Failed to update user ID %d, err: %v\n", updateUser.Id, err)
-		return models.User{}, apperrors.ErrDbServer
+		return updateUser, apperrors.ErrDbServer
 	}
 
 	return updatedUser, nil

@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/utils"
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
@@ -57,6 +56,7 @@ func (u *userHandler) Login(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// set jwt
 	auth := middleware.NewAuthService()
 	token, err := auth.CreateToken(user.Id)
 	if err != nil {
@@ -127,20 +127,16 @@ func (u *userHandler) UserById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// auth check
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		http.Error(w, "Authorization header missing", http.StatusUnauthorized)
-		return
-	}
-
-	auth := middleware.NewAuthService()
-	tokenID, err := auth.VerifyToken(strings.TrimPrefix(authHeader, "Bearer "))
-	if err != nil {
-		log.Println("Hander: err in auth check, err : ", err)
-	}
-	log.Println("tokenID: ", tokenID, " ", "userParam: ", userId)
-	// auth check END
+	// token verification
+	// err = middleware.VerifyIncomingRequest(w, r)
+	// if err != nil {
+	// 	return
+	// }
+	// authHeader := r.Header.Get("Authorization")
+	// if authHeader == "" {
+	// 	http.Error(w, "Authorization header missing", http.StatusUnauthorized)
+	// 	return
+	// }
 
 	user, err := u.userService.UserProfile(ctx, userId)
 	if err != nil {
@@ -219,18 +215,39 @@ func (u *userHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Calling service layer to update user
+	// updatedUser, err = u.userService.UpdateUserProfile(ctx, updatedUser)
+	// if err != nil {
+	// 	if errors.Is(err, apperrors.ErrUserNotFound) {
+	// 		log.Printf("Handler: User with ID %d not found\n", userID)
+	// 		utils.ErrorResponse(ctx, w, http.StatusNotFound, err)
+	// 		return
+	// 	}
+	// 	log.Printf("Handler: Failed to update user ID %d, err: %v\n", userID, err)
+	// 	utils.ErrorResponse(ctx, w, http.StatusInternalServerError, err)
+	// 	return
+	// }
 	updatedUser, err = u.userService.UpdateUserProfile(ctx, updatedUser)
 	if err != nil {
-		if errors.Is(err, apperrors.ErrUserNotFound) {
+		switch {
+		case errors.Is(err, apperrors.ErrUserNotFound):
 			log.Printf("Handler: User with ID %d not found\n", userID)
 			utils.ErrorResponse(ctx, w, http.StatusNotFound, err)
 			return
+
+		case errors.Is(err, apperrors.ErrDuplicateUsername),
+			errors.Is(err, apperrors.ErrDuplicateEmail),
+			errors.Is(err, apperrors.ErrDuplicateUid):
+			log.Printf("Handler: Duplicate entry error for user ID %d, err: %v\n", userID, err)
+			utils.ErrorResponse(ctx, w, http.StatusConflict, err)
+			return
+
+		default:
+			log.Printf("Handler: Failed to update user ID %d, err: %v\n", userID, err)
+			utils.ErrorResponse(ctx, w, http.StatusInternalServerError, err)
+			return
 		}
-		log.Printf("Handler: Failed to update user ID %d, err: %v\n", userID, err)
-		utils.ErrorResponse(ctx, w, http.StatusInternalServerError, err)
-		return
 	}
 
 	// Success response
-	utils.SuccessResponse(ctx, w, http.StatusOK, "User profile updated successfully")
+	utils.SuccessResponse(ctx, w, http.StatusOK, updatedUser)
 }

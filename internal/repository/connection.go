@@ -13,11 +13,20 @@ const (
 	dbname   = "resourcesharing"
 )
 
+// var (
+// 	host     = config.GetEnv("DB_HOST")
+// 	dbUser   = config.GetEnv("DB_USER")
+// 	password = config.GetEnv("DB_PASSWORD")
+// 	dbname   = config.GetEnv("DB_NAME")
+// )
+
 func InitializeDatabase() *sql.DB {
+
+	var port int = 5432
 	var DB *sql.DB
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
-		host, 5432, dbUser, password, dbname)
+		host, port, dbUser, password, dbname)
 
 	var err error
 

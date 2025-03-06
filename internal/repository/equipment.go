@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"errors"
 	"log"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
@@ -53,9 +53,9 @@ type equipment struct {
 type EquipmentStorer interface {
 	CreateEquipment(ctx context.Context, eqp models.Equipment) (models.Equipment, error)
 	GetAllEquipment(ctx context.Context) ([]models.Equipment, error)
-	GetEquipmentsByUserId(ctx context.Context, userId int) ([]models.Equipment, error)
+	EquipmentsOfUser(ctx context.Context, userId int) ([]models.Equipment, error)
 	DeleteEquipmentById(ctx context.Context, equipId int) error
-	UpdateEquipment(tx context.Context, equipId int, equipment models.Equipment) (models.Equipment, error)
+	UpdateEquipment(tx context.Context, equipId int, userId int, equipment models.Equipment) (models.Equipment, error)
 	EquipmentById(ctx context.Context, equipId int) (models.Equipment, error)
 }
 
@@ -65,6 +65,8 @@ func NewEquipmentStore(db *sql.DB) EquipmentStorer {
 
 func (e equipment) CreateEquipment(ctx context.Context, eqp models.Equipment) (models.Equipment, error) {
 
+	var resp models.Equipment
+
 	res := e.db.QueryRowContext(ctx, createEquipment,
 		eqp.Name,
 		eqp.Description,
@@ -73,15 +75,8 @@ func (e equipment) CreateEquipment(ctx context.Context, eqp models.Equipment) (m
 		eqp.EquipmentImg,
 		eqp.UserId,
 	)
-	err := res.Err()
-	if err != nil {
-		log.Println("error occured while making db reqeust for create quipment, err : ", err)
-		return models.Equipment{}, err
-	}
 
-	var resp models.Equipment
-
-	res.Scan(
+	err := res.Scan(
 		&resp.ID,
 		&resp.Name,
 		&resp.Description,
@@ -91,22 +86,28 @@ func (e equipment) CreateEquipment(ctx context.Context, eqp models.Equipment) (m
 		&resp.Status,
 		&resp.UploadedAt)
 
+	if err != nil {
+		log.Printf("Repo: Database error while creating equipment, err : %v", err)
+		return models.Equipment{}, apperrors.ErrFailedToCreate
+	}
+
 	return resp, nil
 }
 
 func (e equipment) GetAllEquipment(ctx context.Context) ([]models.Equipment, error) {
 
-	var equipment models.Equipment
 	var equipmentArr []models.Equipment
 
 	list, err := e.db.Query(getEquipments)
 
 	if err != nil {
-		log.Println("error while executing query, err : ", err)
-		return equipmentArr, err
+		log.Printf("Repo: Error while executing query, err : %v", err)
+		return equipmentArr, apperrors.ErrDbFetching
 	}
+	defer list.Close()
 
 	for list.Next() {
+		var equipment models.Equipment
 
 		err := list.Scan(
 			&equipment.ID,
@@ -119,30 +120,32 @@ func (e equipment) GetAllEquipment(ctx context.Context) ([]models.Equipment, err
 			&equipment.UploadedAt)
 
 		if err != nil {
-			log.Println("error while accessing DB, err : ", err)
-			return equipmentArr, err
+			log.Printf("Repo: Error while scanning row , err : %v", err)
+			return equipmentArr, apperrors.ErrDbScan
 		}
-
 		equipmentArr = append(equipmentArr, equipment)
 	}
 
 	return equipmentArr, nil
 }
 
-func (e equipment) GetEquipmentsByUserId(ctx context.Context, userId int) ([]models.Equipment, error) {
+func (e equipment) EquipmentsOfUser(ctx context.Context, userId int) ([]models.Equipment, error) {
 
-	var equipment models.Equipment
 	var equipmentArr []models.Equipment
 
 	list, err := e.db.Query(equipmentsByUserId, userId)
-
 	if err != nil {
-		log.Println("error while executing query, err : ", err)
-		return equipmentArr, err
+		log.Printf("Repo: error while executing query, err : %v", err)
+		return equipmentArr, apperrors.ErrDbFetching
 	}
+	defer list.Close()
+
+	hasRows := false
 
 	for list.Next() {
+		hasRows = true
 
+		var equipment models.Equipment
 		err := list.Scan(&equipment.ID,
 			&equipment.Name,
 			&equipment.Description,
@@ -153,11 +156,20 @@ func (e equipment) GetEquipmentsByUserId(ctx context.Context, userId int) ([]mod
 			&equipment.UploadedAt)
 
 		if err != nil {
-			log.Println("error while accessing DB, err : ", err)
-			return equipmentArr, err
+			log.Printf("Repo: error while accessing DB, err : %v", err)
+			return equipmentArr, apperrors.ErrDbScan
 		}
 
 		equipmentArr = append(equipmentArr, equipment)
+	}
+
+	if err = list.Err(); err != nil {
+		log.Printf("Repo: error after iterating over rows, err : %v", err)
+		return equipmentArr, apperrors.ErrDbServer
+	}
+
+	if !hasRows {
+		return equipmentArr, apperrors.ErrNoData
 	}
 
 	return equipmentArr, nil
@@ -166,22 +178,25 @@ func (e equipment) GetEquipmentsByUserId(ctx context.Context, userId int) ([]mod
 func (e equipment) DeleteEquipmentById(ctx context.Context, equipId int) error {
 
 	res, err := e.db.Exec(deleteEquipment, equipId)
-
 	if err != nil {
-		log.Println("error while Deleting equipment, err : ", err)
-		return err
+		log.Printf("Repo: error while deleting equipment (equipId: %d), err: %v", equipId, err)
+		return apperrors.ErrDbDelete
 	}
 
-	var count, _ = res.RowsAffected()
-
+	count, err := res.RowsAffected()
+	if err != nil {
+		log.Printf("Repo: error fetching RowsAffected for equipId %d, err: %v", equipId, err)
+		return apperrors.ErrDbServer
+	}
 	if count == 0 {
-		return fmt.Errorf("no data found Bad Request")
+		log.Printf("Repo: No equipment found to delete for equipId %d", equipId)
+		return apperrors.ErrNoData
 	}
 
 	return nil
 }
 
-func (e equipment) UpdateEquipment(ctx context.Context, equipId int, equipment models.Equipment) (models.Equipment, error) {
+func (e equipment) UpdateEquipment(ctx context.Context, equipId int, userId int, equipment models.Equipment) (models.Equipment, error) {
 
 	res := e.db.QueryRowContext(ctx, updateEquipment,
 		equipment.Name,
@@ -192,15 +207,8 @@ func (e equipment) UpdateEquipment(ctx context.Context, equipId int, equipment m
 		equipment.EquipmentImg,
 		equipId)
 
-	err := res.Err()
-
-	if err != nil {
-		return models.Equipment{}, fmt.Errorf("error while Deleting equipment: %v", err)
-	}
-
 	var resp models.Equipment
-
-	err = res.Scan(
+	err := res.Scan(
 		&resp.ID,
 		&resp.Name,
 		&resp.Description,
@@ -209,21 +217,26 @@ func (e equipment) UpdateEquipment(ctx context.Context, equipId int, equipment m
 		&resp.EquipmentImg,
 		&resp.Status,
 		&resp.UploadedAt)
-
 	if err != nil {
-		log.Println("error while scaning query result in update equipment, err : ", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Printf("Repo: No equipment found with ID %d for update", equipId)
+			return models.Equipment{}, apperrors.ErrNoData
+		}
+
+		log.Printf("Repo: Error while scanning query result in UpdateEquipment, err: %v", err)
 		return models.Equipment{}, apperrors.ErrDbScan
 	}
+
+	log.Println("INFO Repo: Equipment updated successfully: ", resp)
 
 	return resp, nil
 }
 
 func (e equipment) EquipmentById(ctx context.Context, equipId int) (models.Equipment, error) {
 
-	res := e.db.QueryRow(equipmentById, equipId)
+	res := e.db.QueryRowContext(ctx, equipmentById, equipId)
 
 	var resp models.Equipment
-
 	err := res.Scan(
 		&resp.ID,
 		&resp.Name,
@@ -234,9 +247,13 @@ func (e equipment) EquipmentById(ctx context.Context, equipId int) (models.Equip
 		&resp.Status,
 		&resp.UploadedAt,
 		&resp.UserId)
-
 	if err != nil {
-		log.Println("error while scaning query result in equipmentById, err : ", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Printf("Repo: No equipment found with ID %d", equipId)
+			return models.Equipment{}, apperrors.ErrEquipmentNotFound
+		}
+
+		log.Printf("Repo: Error scanning query result in EquipmentById (ID: %d), err: %v", equipId, err)
 		return models.Equipment{}, apperrors.ErrDbScan
 	}
 

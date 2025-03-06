@@ -3,7 +3,6 @@ package equipment
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -11,6 +10,7 @@ import (
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/utils"
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/pkg/apperrors"
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/pkg/middleware"
 )
 
 type equipmentHandler struct {
@@ -32,21 +32,28 @@ func NewHandler(service Service) Handler {
 
 func (e *equipmentHandler) CreateEquipmentHandler(w http.ResponseWriter, r *http.Request) {
 
+	ctx := context.Background()
+
 	var equipment models.Equipment
 
 	err := json.NewDecoder(r.Body).Decode(&equipment)
 
 	if err != nil {
-		http.Error(w, "Error while Decoding Request Body", http.StatusBadRequest)
+		utils.ErrorResponse(ctx, w, http.StatusBadRequest, apperrors.ErrInvalidReqBody)
+		return
 	}
 
 	resp, err := e.eqipmentService.CreateEquipment(context.Background(), equipment)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		if err == apperrors.ErrInvalidQuantity {
+			utils.ErrorResponse(ctx, w, http.StatusBadRequest, err)
+			return
+		}
+		utils.ErrorResponse(ctx, w, http.StatusInternalServerError, err)
 		return
 	}
 
-	utils.HandleResponse(w, resp, r)
+	utils.SuccessResponse(ctx, w, http.StatusCreated, resp)
 }
 
 func (e *equipmentHandler) ListEquipmentHandler(w http.ResponseWriter, r *http.Request) {
@@ -54,88 +61,160 @@ func (e *equipmentHandler) ListEquipmentHandler(w http.ResponseWriter, r *http.R
 	equipments, err := e.eqipmentService.GetAllEquipment(context.Background())
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNoContent)
+		log.Printf("Handler: error while fetching data from the backend: %v", err)
+		utils.ErrorResponse(context.Background(), w, http.StatusInternalServerError, err)
+		return
 	}
 
-	utils.HandleResponse(w, equipments, r)
+	utils.SuccessResponse(context.Background(), w, http.StatusOK, equipments)
 }
 
 func (e *equipmentHandler) GetEquipmentsByUserIdHandler(w http.ResponseWriter, r *http.Request) {
 
 	id := r.PathValue("user_id")
 	userId, err := strconv.Atoi(id)
-
 	if err != nil {
-		log.Printf("error while converting userId string into int: %v", err)
-		http.Error(w, "Invalid userId in path value", http.StatusBadRequest)
+		log.Printf("Handler: error while converting userId string into int: err : %v", err)
+		utils.ErrorResponse(context.Background(), w, http.StatusBadRequest, apperrors.ErrPathParam)
 		return
 	}
 
 	equipments, err := e.eqipmentService.GetEquipmentsByUserId(context.Background(), userId)
 
 	if err != nil {
-		log.Printf("error while fetching data from the backend: %v", err)
-		http.Error(w, "Error processing request", http.StatusInternalServerError)
-		return
+		switch err {
+		case apperrors.ErrInvalidUserID:
+			log.Printf("Handler: Invalid userId %d", userId)
+			utils.ErrorResponse(context.Background(), w, http.StatusBadRequest, err)
+			return
+
+		case apperrors.ErrNoData:
+			log.Printf("Handler: No equipment found for userId %d", userId)
+			utils.ErrorResponse(context.Background(), w, http.StatusNotFound, err)
+			return
+
+		default:
+			log.Printf("Handler: Error fetching equipment for userId %d: %v", userId, err)
+			utils.ErrorResponse(context.Background(), w, http.StatusInternalServerError, err)
+			return
+		}
 	}
 
-	if len(equipments) == 0 {
-		utils.HandleResponse(w, "Data Not Found", r)
-		return
-	}
-
-	utils.HandleResponse(w, equipments, r)
+	utils.SuccessResponse(context.Background(), w, http.StatusOK, equipments)
 }
 
 func (e *equipmentHandler) DeleteEquipmentHandler(w http.ResponseWriter, r *http.Request) {
 
-	id := r.PathValue("equipment_id")
-	equipmentId, err := strconv.Atoi(id)
-
+	// token verification
+	err := middleware.VerifyIncomingRequest(w, r)
 	if err != nil {
-		resErr := fmt.Errorf("error while converting req param values form string into int: %v", err)
-		http.Error(w, resErr.Error(), http.StatusBadRequest)
+		return
 	}
-
-	err = e.eqipmentService.DeleteEquipmentById(context.Background(), equipmentId)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "Authorization header missing", http.StatusUnauthorized)
 		return
 	}
 
-	utils.HandleResponse(w, "Equipment Deleted Successfully", r)
+	equipmentId, err := strconv.Atoi(r.PathValue("equipment_id"))
+	if err != nil {
+		log.Printf("Handler: error while converting EquipId req param values form string into int: %v", err)
+		utils.ErrorResponse(context.Background(), w, http.StatusBadRequest, apperrors.ErrAtoi)
+		return
+	}
+
+	// userId, err := strconv.Atoi(r.URL.Query().Get("userId"))
+	userId, err := strconv.Atoi(r.PathValue("user_id"))
+	if err != nil {
+		log.Printf("Handler: error while converting UserId req param values form string into int: %v", err)
+		utils.ErrorResponse(context.Background(), w, http.StatusBadRequest, apperrors.ErrAtoi)
+		return
+	}
+
+	err = e.eqipmentService.DeleteEquipmentById(context.Background(), equipmentId, userId)
+	if err != nil {
+		switch err {
+		case apperrors.ErrEquipmentNotFound:
+			log.Printf("Handler: Equipment not found for equipId %d", equipmentId)
+			utils.ErrorResponse(context.Background(), w, http.StatusNotFound, err)
+			return
+
+		case apperrors.ErrNotAnOwner:
+			log.Printf("Handler: User %d is not the owner of equipment %d", userId, equipmentId)
+			utils.ErrorResponse(context.Background(), w, http.StatusForbidden, err)
+			return
+
+		case apperrors.ErrNoData:
+			log.Printf("Handler: No equipment found to delete for equipId %d", equipmentId)
+			utils.ErrorResponse(context.Background(), w, http.StatusNotFound, err)
+			return
+
+		default:
+			log.Printf("Handler: Internal server error while deleting equipId %d: %v", equipmentId, err)
+			utils.ErrorResponse(context.Background(), w, http.StatusInternalServerError, err)
+			return
+		}
+	}
+
+	utils.SuccessResponse(context.Background(), w, http.StatusOK, "Equipment Deleted Successfully")
 }
 
 func (e *equipmentHandler) UpdateEquipmentHandler(w http.ResponseWriter, r *http.Request) {
 
-	id := r.PathValue("equipment_id")
-
-	equipmentId, err := strconv.Atoi(id)
-
+	// token verification
+	err := middleware.VerifyIncomingRequest(w, r)
 	if err != nil {
-		resErr := fmt.Errorf("error while converting equipment id param form string into int: %v", err)
-		http.Error(w, resErr.Error(), http.StatusInternalServerError)
+		return
 	}
-
-	var equipment models.Equipment
-
-	err = json.NewDecoder(r.Body).Decode(&equipment)
-
-	if err != nil {
-		log.Println("error in handler while parsing request body, err : ", err)
-		http.Error(w, "Error while Decoding Request Body", http.StatusBadRequest)
-	}
-
-	resp, err := e.eqipmentService.UpdateEquipment(context.Background(), equipmentId, equipment)
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "Authorization header missing", http.StatusUnauthorized)
 		return
 	}
 
-	utils.HandleResponse(w, resp, r)
+	equipmentId, err := strconv.Atoi(r.PathValue("equipment_id"))
+	if err != nil {
+		log.Printf("Handler: error while converting equipmentId param form string into int, err : %v", err)
+		utils.ErrorResponse(context.Background(), w, http.StatusBadRequest, apperrors.ErrAtoi)
+		return
+	}
 
+	userId, err := strconv.Atoi(r.PathValue("user_id"))
+	if err != nil {
+		log.Printf("Handler: error while converting userId param form string into int, err : %v", err)
+		utils.ErrorResponse(context.Background(), w, http.StatusBadRequest, apperrors.ErrAtoi)
+		return
+	}
+
+	var equipment models.Equipment
+	err = json.NewDecoder(r.Body).Decode(&equipment)
+	if err != nil {
+		log.Printf("Handler: error while parsing request body, err : %v", err)
+		utils.ErrorResponse(context.Background(), w, http.StatusBadRequest, apperrors.ErrInvalidReqBody)
+		return
+	}
+
+	resp, err := e.eqipmentService.UpdateEquipment(context.Background(), equipmentId, userId, equipment)
+	if err != nil {
+		switch err {
+		case apperrors.ErrEquipmentNotFound:
+			log.Printf("Handler: Equipment with ID %d not found", equipmentId)
+			utils.ErrorResponse(context.Background(), w, http.StatusNotFound, err)
+			return
+
+		case apperrors.ErrNotAnOwner:
+			log.Printf("Handler: User ID %d is not the owner of Equipment ID %d", userId, equipmentId)
+			utils.ErrorResponse(context.Background(), w, http.StatusForbidden, err)
+			return
+
+		default:
+			log.Printf("Handler: Error updating Equipment ID %d, err: %v", equipmentId, err)
+			utils.ErrorResponse(context.Background(), w, http.StatusInternalServerError, err)
+			return
+		}
+	}
+
+	utils.SuccessResponse(context.Background(), w, http.StatusOK, resp)
 }
 
 func (e *equipmentHandler) EquipmentById(w http.ResponseWriter, r *http.Request) {
@@ -145,16 +224,25 @@ func (e *equipmentHandler) EquipmentById(w http.ResponseWriter, r *http.Request)
 	equipId, err := strconv.Atoi(id)
 
 	if err != nil {
-		log.Println("error while converting equipment id param form string into int, err : ", err)
-		http.Error(w, apperrors.ErrAtoi.Error(), http.StatusInternalServerError)
+		log.Printf("Handler: error while converting equipment id param form string into int, err : %v", err)
+		utils.ErrorResponse(context.Background(), w, http.StatusBadRequest, apperrors.ErrAtoi)
+		return
 	}
 
 	resp, err := e.eqipmentService.EquipmentById(context.Background(), equipId)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		switch err {
+		case apperrors.ErrEquipmentNotFound:
+			log.Printf("Handler: No equipment found with ID %d", equipId)
+			utils.ErrorResponse(context.Background(), w, http.StatusNotFound, err)
+			return
+
+		default:
+			log.Printf("Handler: Error fetching equipment with ID %d: %v", equipId, err)
+			utils.ErrorResponse(context.Background(), w, http.StatusInternalServerError, err)
+			return
+		}
 	}
 
-	utils.HandleResponse(w, resp, r)
-
+	utils.SuccessResponse(context.Background(), w, http.StatusOK, resp)
 }

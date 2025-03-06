@@ -36,7 +36,7 @@ func (u User) ValidateUser(ctx context.Context, validatePassword bool) error {
 
 	// Regex patterns
 	phoneRegex := regexp.MustCompile(`^\d{10}$`)
-	uidRegex := regexp.MustCompile(`^\d{12}$`)
+	// uidRegex := regexp.MustCompile(`^\d{12}$`)
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 
 	// Validations
@@ -52,7 +52,10 @@ func (u User) ValidateUser(ctx context.Context, validatePassword bool) error {
 	if !phoneRegex.MatchString(u.Phone) {
 		validationErrors = append(validationErrors, "phone number must be exactly 10 digits")
 	}
-	if !uidRegex.MatchString(fmt.Sprintf("%012d", u.Uid)) {
+	// if !uidRegex.MatchString(fmt.Sprintf("%012d", u.Uid)) {
+	// 	validationErrors = append(validationErrors, "UID must be exactly 12 digits")
+	// }
+	if !(u.Uid >= 100000000000 && u.Uid <= 999999999999) {
 		validationErrors = append(validationErrors, "UID must be exactly 12 digits")
 	}
 	if u.Email == "" || !emailRegex.MatchString(u.Email) {

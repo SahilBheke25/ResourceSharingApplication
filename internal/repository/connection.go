@@ -22,7 +22,7 @@ const (
 
 func InitializeDatabase() *sql.DB {
 
-	var port int = 5432
+	// var port string = "5432"
 	var DB *sql.DB
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",

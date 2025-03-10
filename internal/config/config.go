@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -13,6 +14,17 @@ func LoadEnv() {
 	}
 }
 
-func GetEnv(key string) string {
-	return os.Getenv(key)
+func GetEnv() string {
+	var (
+		host     = os.Getenv("DB_HOST")
+		dbUser   = os.Getenv("DB_USER")
+		password = os.Getenv("DB_PASSWORD")
+		dbname   = os.Getenv("DB_NAME")
+		port     = os.Getenv("DB_PORT")
+	)
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
+		"password=%s dbname=%s sslmode=disable",
+		host, port, dbUser, password, dbname)
+
+	return psqlInfo
 }

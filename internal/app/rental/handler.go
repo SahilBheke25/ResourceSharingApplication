@@ -29,7 +29,7 @@ func (rentalH *rentalHandler) RentEquipment(w http.ResponseWriter, r *http.Reque
 	// Path param conversion
 	userId, err := strconv.Atoi(r.PathValue("user_id"))
 	if err != nil {
-		log.Printf("Handler: error while converting equipment id param form string to int, err : %v", err)
+		log.Printf("Handler: error while converting user id param form string to int, err : %v", err)
 		utils.ErrorResponse(context.Background(), w, http.StatusBadRequest, apperrors.ErrAtoi)
 	}
 

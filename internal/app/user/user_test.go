@@ -8,6 +8,7 @@ import (
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/user/mocks"
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/pkg/apperrors"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -44,7 +45,7 @@ func (s *UserApiTestSuite) TestLoginHandler() {
 			username: "SahilBheke",
 			password: "Aim@1045",
 			setup: func() {
-				s.userService.On("Authenticate", mock.Anything, mock.Anything, mock.Anything).Return(models.User{
+				s.userService.On("Authenticate", mock.Anything, "SahilBheke", "Aim@1045").Return(models.User{
 					Id:         1,
 					Username:   "SahilBheke",
 					Password:   "Aim@1045",
@@ -58,6 +59,24 @@ func (s *UserApiTestSuite) TestLoginHandler() {
 				}, nil)
 			},
 			expectedStatusCode: http.StatusOK,
+		},
+		{
+			name:     "Invaild Credentials",
+			username: "SahilBheke",
+			password: "Aim@1045",
+			setup: func() {
+				s.userService.On("Authenticate", mock.Anything, "SahilBheke", "Aim@1045").Return(models.User{}, apperrors.ErrInvalidCredentials)
+			},
+			expectedStatusCode: http.StatusUnauthorized,
+		},
+		{
+			name:     "Server Error",
+			username: "SahilBheke",
+			password: "Aim@1045",
+			setup: func() {
+				s.userService.On("Authenticate", mock.Anything, "SahilBheke", "Aim@1045").Return(models.User{}, apperrors.ErrDbServer)
+			},
+			expectedStatusCode: http.StatusInternalServerError,
 		},
 	}
 

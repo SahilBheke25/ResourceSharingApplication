@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app"
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/config"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/repository"
 
@@ -13,7 +14,8 @@ import (
 
 func main() {
 
-	db := repository.InitializeDatabase()
+	sqlConfig := config.GetEnv()
+	db := repository.InitializeDatabase(sqlConfig)
 	defer db.Close()
 
 	dependencies := app.InitializeDependencies(db)

@@ -20,12 +20,6 @@ type User struct {
 	Uid        int    `json:"uid,omitempty"`
 }
 
-// type UserProfile struct {
-// 	Username   string `json:"username"`
-// 	First_name string `json:"firstname"`
-// 	Last_name  string `json:"lastname"`
-// }
-
 type UserCredentials struct {
 	Password string `json:"password"`
 }
@@ -52,9 +46,6 @@ func (u User) ValidateUser(ctx context.Context, validatePassword bool) error {
 	if !phoneRegex.MatchString(u.Phone) {
 		validationErrors = append(validationErrors, "phone number must be exactly 10 digits")
 	}
-	// if !uidRegex.MatchString(fmt.Sprintf("%012d", u.Uid)) {
-	// 	validationErrors = append(validationErrors, "UID must be exactly 12 digits")
-	// }
 	if !(u.Uid >= 100000000000 && u.Uid <= 999999999999) {
 		validationErrors = append(validationErrors, "UID must be exactly 12 digits")
 	}

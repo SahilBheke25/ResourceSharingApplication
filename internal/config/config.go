@@ -2,29 +2,25 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"os"
-
-	"github.com/joho/godotenv"
+	"strconv"
 )
 
-func LoadEnv() {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
-	}
-}
+func GetDbConfig() string {
 
-func GetEnv() string {
-	var (
-		host     = os.Getenv("DB_HOST")
-		dbUser   = os.Getenv("DB_USER")
-		password = os.Getenv("DB_PASSWORD")
-		dbname   = os.Getenv("DB_NAME")
-		port     = os.Getenv("DB_PORT")
-	)
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
+	host := os.Getenv("DB_HOST")
+	port, _ := strconv.Atoi(os.Getenv("DB_PORT"))
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASS")
+	name := os.Getenv("DB_NAME")
+
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
 		"password=%s dbname=%s sslmode=disable",
-		host, port, dbUser, password, dbname)
+		host, port, user, password, name)
 
 	return psqlInfo
+}
+
+func GetJwtSecret() string {
+	return os.Getenv("JWT_SECRET")
 }

@@ -2,9 +2,9 @@ package middleware
 
 import (
 	"fmt"
-	"os"
 	"time"
 
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/config"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -46,7 +46,8 @@ func (auth auth) VerifyToken(tokenString string) (int, error) {
 	return int(userIDFloat), nil
 }
 
-var secretKey = []byte(os.Getenv("JWT_SECRET"))
+// var secretKey = []byte("secret-key")
+var secretKey = []byte(config.GetJwtSecret())
 
 func (auth auth) CreateToken(userID int) (string, error) {
 

@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/app"
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/config"
+	"github.com/joho/godotenv"
 
 	"github.com/SahilBheke25/ResourceSharingApplication/internal/repository"
 
@@ -14,8 +14,12 @@ import (
 
 func main() {
 
-	sqlConfig := config.GetEnv()
-	db := repository.InitializeDatabase(sqlConfig)
+	if err := godotenv.Load("../.env"); err != nil {
+		log.Println("No .env file found, err : ", err)
+		return
+	}
+
+	db := repository.InitializeDatabase()
 	defer db.Close()
 
 	dependencies := app.InitializeDependencies(db)

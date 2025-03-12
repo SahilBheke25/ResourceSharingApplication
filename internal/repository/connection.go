@@ -2,15 +2,14 @@ package repository
 
 import (
 	"database/sql"
+
+	"github.com/SahilBheke25/ResourceSharingApplication/internal/config"
 )
 
-func InitializeDatabase(psqlInfo string) *sql.DB {
+func InitializeDatabase() *sql.DB {
 
-	// var port string = "5432"
 	var DB *sql.DB
-	// psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-	// 	"password=%s dbname=%s sslmode=disable",
-	// 	host, port, dbUser, password, dbname)
+	psqlInfo := config.GetDbConfig()
 
 	var err error
 

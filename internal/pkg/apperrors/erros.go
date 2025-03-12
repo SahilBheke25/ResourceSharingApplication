@@ -5,6 +5,7 @@ import "errors"
 var (
 	ErrInternal = errors.New("internal server error")
 	ErrDbServer = errors.New("database serve is down")
+	ErrEnv      = errors.New("error no .env file found")
 
 	// Auth header errors
 	ErrHeaderMissing = errors.New("authorization header missing")

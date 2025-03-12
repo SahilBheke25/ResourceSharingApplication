@@ -47,7 +47,7 @@ func (auth auth) VerifyToken(tokenString string) (int, error) {
 }
 
 // var secretKey = []byte("secret-key")
-var secretKey = []byte(config.GetEnv("JWT_SECRET"))
+var secretKey = []byte(config.GetJwtSecret())
 
 func (auth auth) CreateToken(userID int) (string, error) {
 

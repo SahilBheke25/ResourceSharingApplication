@@ -35,16 +35,26 @@ func (s service) Authenticate(ctx context.Context, username, password string) (m
 		return models.User{}, err
 	}
 
-	// Password Verification
 	if resp.Password != password {
-		log.Println(resp.Password, " ", password)
 		return models.User{}, apperrors.ErrInvalidCredentials
 	}
+	// Password Verification
+	// if !utils.CheckPasswordHash(password, resp.Password) {
+	// 	log.Println(resp.Password, " ", password)
+	// 	return models.User{}, apperrors.ErrInvalidCredentials
+	// }
 
 	return resp, nil
 }
 
 func (s service) RegisterUser(ctx context.Context, user models.User) error {
+
+	// hashedPassword, err := utils.HashPassword(user.Password)
+	// if err != nil {
+	// 	log.Printf("Service: error occured while hashing password, err : %v\n", err)
+	// 	return err
+	// }
+	// user.Password = hashedPassword
 
 	//DB call
 	err := s.userRepo.RegisterUser(ctx, user)

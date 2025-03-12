@@ -127,17 +127,6 @@ func (u *userHandler) UserById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// token verification
-	// err = middleware.VerifyIncomingRequest(w, r)
-	// if err != nil {
-	// 	return
-	// }
-	// authHeader := r.Header.Get("Authorization")
-	// if authHeader == "" {
-	// 	http.Error(w, "Authorization header missing", http.StatusUnauthorized)
-	// 	return
-	// }
-
 	user, err := u.userService.UserProfile(ctx, userId)
 	if err != nil {
 		if errors.Is(err, apperrors.ErrUserNotFound) {

@@ -125,6 +125,8 @@ func (u user) RegisterUser(ctx context.Context, user models.User) error {
 
 func (u user) GetUserByUsername(ctx context.Context, userName string) (models.User, error) {
 
+	log.Printf("Repo: fetching user by username: %s\n", userName)
+
 	var user models.User
 	err := u.db.QueryRow(userByusername, userName).Scan(&user.Id,
 		&user.Email,
@@ -140,10 +142,10 @@ func (u user) GetUserByUsername(ctx context.Context, userName string) (models.Us
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			log.Printf("error while scanning data, err : %v", err)
+			log.Printf("Repo: error while scanning data, err : %v", err)
 			return models.User{}, apperrors.ErrInvalidCredentials
 		}
-		log.Printf("error while scanning data, err : %v\n", err)
+		log.Printf("Repo: error while scanning data, err : %v\n", err)
 		return models.User{}, apperrors.ErrDbServer
 	}
 

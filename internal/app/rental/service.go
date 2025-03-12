@@ -27,7 +27,8 @@ func (s service) RentEquipment(ctx context.Context, rental models.Rental) (bill 
 
 	// Duration validation
 	rental.Duration = (rental.RentTill.Sub(rental.RentAt)).Hours()
-	if rental.Duration < 0.5 {
+	if rental.Duration < 24 {
+		log.Printf("Service: error duration must be atleast 1 Day")
 		err = apperrors.ErrDurationTooShort
 		return
 	}
@@ -35,13 +36,14 @@ func (s service) RentEquipment(ctx context.Context, rental models.Rental) (bill 
 	// Equipment to rent
 	equip, err := s.equipmentService.EquipmentById(ctx, rental.EquipId)
 	if err != nil {
-		log.Println("error while calling equipment Service from rent equipment service, err : ", err)
+		log.Printf("Service: error while calling equipment Service from rent equipment service, err : %v", err)
 		return models.Billing{}, err
 	}
 
 	// Quantity check
 	availbaleQuntity := equip.Quantity
 	if availbaleQuntity < rental.Quantity {
+		log.Printf("Service: error quantity not available")
 		return models.Billing{}, apperrors.ErrQuantityNotAvailable
 	}
 
@@ -49,6 +51,7 @@ func (s service) RentEquipment(ctx context.Context, rental models.Rental) (bill 
 	rentPerDay := equip.RentPerDay
 	bill, err = s.rentalRepo.RentEquipment(ctx, rental, availbaleQuntity, rentPerDay)
 	if err != nil {
+		log.Printf("Service: error while calling RentEquipment DB operation, err : %v", err)
 		return models.Billing{}, err
 	}
 

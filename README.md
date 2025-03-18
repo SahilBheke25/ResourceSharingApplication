@@ -3,7 +3,7 @@ This repo contains my Resource Sharing Application project.
 Objective: To allow farmers to lend and rent their famring tools using web platform.
 
 # Project File Structure
-</br>
+```
 ├── cmd
 │   └── main.go
 ├── go.mod
@@ -46,3 +46,4 @@ Objective: To allow farmers to lend and rent their famring tools using web platf
 │       ├── rental.go
 │       └── user.go
 └── README.md
+```

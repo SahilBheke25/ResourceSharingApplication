@@ -4,10 +4,10 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/app"
+	"github.com/SahilBheke25/quick-farm-backend/internal/app"
 	"github.com/joho/godotenv"
 
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/repository"
+	"github.com/SahilBheke25/quick-farm-backend/internal/repository"
 
 	_ "github.com/lib/pq"
 )
@@ -26,5 +26,6 @@ func main() {
 
 	router := app.InitializeRoutes(dependencies)
 
+	log.Println("Server up and running on port: 3000")
 	log.Fatal(http.ListenAndServe(":3000", router))
 }

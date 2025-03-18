@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/utils"
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/pkg/apperrors"
+	"github.com/SahilBheke25/quick-farm-backend/internal/app/utils"
+	"github.com/SahilBheke25/quick-farm-backend/internal/pkg/apperrors"
 )
 
 func VerifyIncomingRequest(w http.ResponseWriter, r *http.Request) error {

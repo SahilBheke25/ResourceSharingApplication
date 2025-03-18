@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	models "github.com/SahilBheke25/ResourceSharingApplication/internal/models"
+	models "github.com/SahilBheke25/quick-farm-backend/internal/models"
 	mock "github.com/stretchr/testify/mock"
 )
 

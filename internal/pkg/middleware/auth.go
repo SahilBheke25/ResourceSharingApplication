@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/config"
+	"github.com/SahilBheke25/quick-farm-backend/internal/config"
 	"github.com/golang-jwt/jwt/v5"
 )
 

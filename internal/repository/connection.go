@@ -3,7 +3,7 @@ package repository
 import (
 	"database/sql"
 
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/config"
+	"github.com/SahilBheke25/quick-farm-backend/internal/config"
 )
 
 func InitializeDatabase() *sql.DB {

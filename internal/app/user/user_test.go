@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/user/mocks"
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/pkg/apperrors"
+	"github.com/SahilBheke25/quick-farm-backend/internal/app/user/mocks"
+	"github.com/SahilBheke25/quick-farm-backend/internal/models"
+	"github.com/SahilBheke25/quick-farm-backend/internal/pkg/apperrors"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )

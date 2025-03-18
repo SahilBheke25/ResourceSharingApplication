@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/utils"
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/models"
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/pkg/apperrors"
+	"github.com/SahilBheke25/quick-farm-backend/internal/app/utils"
+	"github.com/SahilBheke25/quick-farm-backend/internal/models"
+	"github.com/SahilBheke25/quick-farm-backend/internal/pkg/apperrors"
 )
 
 type rentalHandler struct {

@@ -1,4 +1,4 @@
-module github.com/SahilBheke25/ResourceSharingApplication
+module github.com/SahilBheke25/quick-farm-backend
 
 go 1.23.4
 

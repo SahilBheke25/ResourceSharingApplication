@@ -3,10 +3,10 @@ package app
 import (
 	"database/sql"
 
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/equipment"
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/rental"
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/app/user"
-	"github.com/SahilBheke25/ResourceSharingApplication/internal/repository"
+	"github.com/SahilBheke25/quick-farm-backend/internal/app/equipment"
+	"github.com/SahilBheke25/quick-farm-backend/internal/app/rental"
+	"github.com/SahilBheke25/quick-farm-backend/internal/app/user"
+	"github.com/SahilBheke25/quick-farm-backend/internal/repository"
 )
 
 type Dependencies struct {

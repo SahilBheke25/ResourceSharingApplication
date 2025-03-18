@@ -1,27 +1,29 @@
-# ResouceSharingApplication
-This repo contains my Resource Sharing Application project.
+# Quick Farm
+
+Problem Statement: In rural area farmers require different set of conventional and unconventional tools in one agriculture cycle and it's not possible for farmers to own each and every required  tool or rent it from lenders when required. Even if somebody own a tool it might become Non performing asset for them.
+
 Objective: To allow farmers to lend and rent their famring tools using web platform.
 
 # APIs
 
 ## User
 
-List Users : GET http://localhost:8080/user/{user_id}
-Get User Details : GET http://localhost:8080/user/{user_id}
-Edit User Profile : PUT http://localhost:8080/user/edit-profile/{user_id}
-User Login : POST http://localhost:8080/user/login
-User Registration : POST http://localhost:8080/user/register
+- List Users : GET /user/{user_id}
+- Get User Details : GET /user/{user_id}
+- Edit User Profile : PUT /user/edit-profile/{user_id}
+- User Login : POST /user/login
+- User Registration : POST /user/register
 
 ## Equipment
 
-List Equipment : GET http://localhost:8080/equipments
-Get Equipment Details : GET http://localhost:8080/equipments/{equipment_id}
-Create Equipment : POST http://localhost:8080/equipments
-Update Equipment : PUT http://localhost:8080/user/{user_id}/equipments/{equipment_id}
-Delete Equipment : DELETE http://localhost:8080/user/{user_id}/equipments/{equipment_id}
-Get Equipment Owner : GET http://localhost:8080/owner/equipment/{equipment_id}
-Get User's Lended Equipment : GET http://localhost:8080/users/{user_id}/equipments/lended
-Rent Equipment : POST http://localhost:8080/users/{user_id}/equipments/{equip_id}/rent
+- List Equipment : GET /equipments
+- Get Equipment Details : GET /equipments/{equipment_id}
+- Create Equipment : POST /equipments
+- Update Equipment : PUT /user/{user_id}/equipments/{equipment_id}
+- Delete Equipment : DELETE /user/{user_id}/equipments/{equipment_id}
+- Get Equipment Owner : GET /owner/equipment/{equipment_id}
+- Get User's Lended Equipment : GET /users/{user_id}/equipments/lended
+- Rent Equipment : POST /users/{user_id}/equipments/{equip_id}/rent
 
 # Project File Structure
 ```

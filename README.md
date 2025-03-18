@@ -4,6 +4,9 @@ Problem Statement: In rural area farmers require different set of conventional a
 
 Objective: To allow farmers to lend and rent their famring tools using web platform.
 
+# Project Documentation
+<a href="https://docs.google.com/document/d/1-nHlaTeGwmPCY1gzvjb_Zw78IeqDkPvhQHNOcsjo-u0/edit?usp=sharing">Doc Link</a>
+
 # APIs
 
 ## User
@@ -24,6 +27,11 @@ Objective: To allow farmers to lend and rent their famring tools using web platf
 - Get Equipment Owner : GET /owner/equipment/{equipment_id}
 - Get User's Lended Equipment : GET /users/{user_id}/equipments/lended
 - Rent Equipment : POST /users/{user_id}/equipments/{equip_id}/rent
+  
+
+# Postman Collection 
+<a href="https://solar-star-172287.postman.co/workspace/My-Workspace~db048750-3973-4142-8e4d-36ad4cd7cf0b/collection/41461760-c03c7feb-fb93-4d63-996d-767d1868c8c5?action=share&creator=41461760">Quick-Share</a>
+
 
 # Project File Structure
 ```
